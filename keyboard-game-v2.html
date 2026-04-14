@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="void">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KeyBlast v2 — Keyboard Learning Game</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ══ THEMES ══════════════════════════════════════════════════════════════ */
+    [data-theme="void"] {
+      --bg:#0f0f14; --surface:#1a1a24; --border:#2a2a3a;
+      --accent:#6c63ff; --accent2:#ff6584;
+      --green:#43e97b; --red:#ff4757; --yellow:#ffd32a;
+      --text:#e8e8f0; --muted:#6b6b80;
+      --key-top:#2a2a3f; --key-border:#3a3a55; --key-shadow:#0a0a12;
+      --water1:#050520; --water2:#0d1545;
+      --sky1:#0a0020; --sky2:#1a0535;
+    }
+    [data-theme="ocean"] {
+      --bg:#050d1a; --surface:#0a1628; --border:#1a3040;
+      --accent:#00b4d8; --accent2:#48cae4;
+      --green:#2ec4b6; --red:#e63946; --yellow:#ffd166;
+      --text:#caf0f8; --muted:#5a8a9a;
+      --key-top:#0d2137; --key-border:#1a3a50; --key-shadow:#020810;
+      --water1:#001840; --water2:#003580;
+      --sky1:#001030; --sky2:#004060;
+    }
+    [data-theme="neon"] {
+      --bg:#080010; --surface:#100020; --border:#2a0045;
+      --accent:#ff00ff; --accent2:#00ffff;
+      --green:#39ff14; --red:#ff003c; --yellow:#fff200;
+      --text:#f0e0ff; --muted:#8040a0;
+      --key-top:#180028; --key-border:#380060; --key-shadow:#030008;
+      --water1:#000018; --water2:#050025;
+      --sky1:#030012; --sky2:#0a0028;
+    }
+    [data-theme="forest"] {
+      --bg:#040c04; --surface:#081408; --border:#143014;
+      --accent:#39d353; --accent2:#a8ff78;
+      --green:#56e879; --red:#ff4444; --yellow:#ffd700;
+      --text:#d4f5d4; --muted:#4a7a4a;
+      --key-top:#0c1e0c; --key-border:#1e3c1e; --key-shadow:#010401;
+      --water1:#001a05; --water2:#003010;
+      --sky1:#050f02; --sky2:#0a1a05;
+    }
+    [data-theme="sunset"] {
+      --bg:#120600; --surface:#200c00; --border:#401800;
+      --accent:#ff6b35; --accent2:#ffd93d;
+      --green:#52b788; --red:#d62828; --yellow:#ffb703;
+      --text:#ffe8d6; --muted:#9a5a30;
+      --key-top:#2a1000; --key-border:#4a2000; --key-shadow:#050200;
+      --water1:#200800; --water2:#401500;
+      --sky1:#150300; --sky2:#300800;
+    }
+    [data-theme="candy"] {
+      --bg:#1a0828; --surface:#2a1040; --border:#3d1858;
+      --accent:#ff79c6; --accent2:#bd93f9;
+      --green:#50fa7b; --red:#ff5555; --yellow:#f1fa8c;
+      --text:#f8f8f2; --muted:#8a6a9a;
+      --key-top:#3a1858; --key-border:#5a2878; --key-shadow:#0d0418;
+      --water1:#100520; --water2:#200a40;
+      --sky1:#0d0318; --sky2:#1a0830;
+    }
+    [data-theme="lava"] {
+      --bg:#0d0300; --surface:#1a0800; --border:#3d1200;
+      --accent:#ff4500; --accent2:#ff8c00;
+      --green:#7fff00; --red:#ff0000; --yellow:#ffd700;
+      --text:#fff3e0; --muted:#8a5030;
+      --key-top:#250800; --key-border:#451500; --key-shadow:#050100;
+      --water1:#1a0500; --water2:#3d0f00;
+      --sky1:#100200; --sky2:#280600;
+    }
+    [data-theme="arctic"] {
+      --bg:#e8f4fc; --surface:#ffffff; --border:#b8d8f0;
+      --accent:#0077b6; --accent2:#00b4d8;
+      --green:#2d6a4f; --red:#c0392b; --yellow:#e9c46a;
+      --text:#023047; --muted:#6a9ab0;
+      --key-top:#d0e8f8; --key-border:#a0c8e8; --key-shadow:#88b0d0;
+      --water1:#a8d8f0; --water2:#78bce0;
+      --sky1:#c8e8f8; --sky2:#a0d0f0;
+    }
+    [data-theme="ivory"] {
+      --bg:#f5f0e8; --surface:#ffffff; --border:#d8d0c0;
+      --accent:#8b5cf6; --accent2:#ec4899;
+      --green:#16a34a; --red:#dc2626; --yellow:#d97706;
+      --text:#1a1a2e; --muted:#888;
+      --key-top:#e8e0d0; --key-border:#c8c0b0; --key-shadow:#b0a898;
+      --water1:#cce8f4; --water2:#a0d4ec;
+      --sky1:#d4e8f8; --sky2:#b0d0f0;
+    }
+
+    /* ══ BASE ════════════════════════════════════════════════════════════════ */
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 18px 16px 32px;
+      user-select: none;
+      transition: background 0.4s, color 0.4s;
+    }
+
+    h1 {
+      font-size: 2rem;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 2px;
+    }
+
+    .subtitle { color: var(--muted); font-size: 0.8rem; margin-bottom: 14px; }
+
+    /* ══ THEME SELECTOR (inside overlay) ════════════════════════════════════ */
+    .theme-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .theme-label { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; width: 100%; text-align: center; margin-bottom: 2px; }
+    .theme-swatch {
+      width: 26px; height: 26px; border-radius: 50%;
+      cursor: pointer;
+      border: 3px solid transparent;
+      transition: transform 0.2s, border-color 0.2s;
+      flex-shrink: 0;
+    }
+    .theme-swatch:hover { transform: scale(1.25); }
+    .theme-swatch.active { border-color: var(--text); transform: scale(1.15); }
+
+    /* ══ MODE CARDS (inside overlay) ════════════════════════════════════════ */
+    .mode-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 8px; margin-bottom: 18px;
+    }
+    .mode-card {
+      padding: 10px 8px;
+      border-radius: 12px;
+      border: 2px solid var(--border);
+      background: var(--bg);
+      color: var(--muted);
+      font-size: 0.8rem; font-weight: 600;
+      cursor: pointer; transition: all 0.2s;
+      text-align: center; line-height: 1.4;
+    }
+    .mode-card .mc-icon { font-size: 1.4rem; display: block; margin-bottom: 3px; }
+    .mode-card .mc-desc { font-size: 0.68rem; color: var(--muted); font-weight: 400; display: block; margin-top: 2px; }
+    .mode-card.active { border-color: var(--accent); color: var(--accent); background: var(--surface); }
+    .mode-card:not(.active):hover { border-color: var(--muted); color: var(--text); }
+
+    /* ══ QUIT BUTTON ══════════════════════════════════════════════════════════ */
+    .quit-btn {
+      position: fixed; top: 14px; right: 16px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      border: 2px solid var(--border);
+      background: var(--surface);
+      color: var(--muted);
+      font-size: 0.78rem; font-weight: 700;
+      cursor: pointer; transition: all 0.2s;
+      z-index: 50;
+    }
+    .quit-btn:hover { border-color: var(--red); color: var(--red); }
+    .quit-btn.hidden { display: none; }
+
+    /* ══ STATS ═══════════════════════════════════════════════════════════════ */
+    .stats { display: flex; gap: 20px; margin-bottom: 12px; align-items: center; flex-wrap: wrap; justify-content: center; }
+    .stat { text-align: center; }
+    .stat-value { font-size: 1.65rem; font-weight: 900; line-height: 1; }
+    .stat-label { font-size: 0.68rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 2px; }
+    .stat-value.s-score  { color: var(--accent); }
+    .stat-value.s-streak { color: var(--yellow); }
+    .stat-value.s-acc    { color: var(--green); }
+    .stat-value.s-timer  { color: var(--accent2); }
+    .lives-display { font-size: 1.2rem; }
+
+    /* ══ PROGRESS ════════════════════════════════════════════════════════════ */
+    .progress-bar {
+      width: 100%; max-width: 620px; height: 5px;
+      background: var(--border); border-radius: 999px;
+      margin-bottom: 12px; overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      border-radius: 999px;
+      transition: width 0.6s linear;
+      width: 100%;
+    }
+
+    /* ══ TARGET BOX (Keys / Words) ═══════════════════════════════════════════ */
+    .target-box {
+      background: var(--surface); border: 2px solid var(--border);
+      border-radius: 16px; padding: 18px 40px;
+      margin-bottom: 10px; min-width: 280px; max-width: 620px; width: 100%;
+      text-align: center; transition: border-color 0.15s;
+    }
+    .target-box.correct { border-color: var(--green); }
+    .target-box.wrong   { border-color: var(--red); animation: shake 0.28s ease; }
+    .target-label { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
+    .target-key   { font-size: 3.5rem; font-weight: 900; line-height: 1; }
+    .target-word  { font-size: 1.9rem; font-weight: 700; display: flex; justify-content: center; gap: 4px; flex-wrap: wrap; }
+    .char-cell    { padding: 2px 0; border-bottom: 3px solid var(--border); min-width: 22px; text-align: center; }
+    .char-cell.done    { border-color: var(--green); color: var(--green); }
+    .char-cell.current { border-color: var(--accent); }
+    .char-cell.wrong-c { border-color: var(--red); color: var(--red); }
+
+    /* ══ GAME ARENAS ═════════════════════════════════════════════════════════ */
+    .arena {
+      position: relative;
+      width: 100%; max-width: 620px; height: 260px;
+      border-radius: 16px; overflow: hidden;
+      border: 2px solid var(--border);
+      margin-bottom: 10px;
+    }
+
+    /* Fishing */
+    #fishing-arena { background: linear-gradient(180deg, var(--water1) 0%, var(--water2) 100%); }
+
+    .bubble {
+      position: absolute; border-radius: 50%;
+      background: rgba(255,255,255,0.1);
+      animation: bubbleRise linear infinite;
+    }
+    @keyframes bubbleRise {
+      0%   { bottom:-20px; opacity:0; }
+      8%   { opacity:1; }
+      92%  { opacity:0.7; }
+      100% { bottom:110%; opacity:0; }
+    }
+
+    .seaweed {
+      position: absolute; bottom: 0;
+      width: 10px; border-radius: 8px 8px 0 0;
+      background: #1a5c20;
+      transform-origin: bottom center;
+      animation: sway 3.5s ease-in-out infinite alternate;
+    }
+    @keyframes sway {
+      from { transform: rotate(-12deg) skewX(-4deg); }
+      to   { transform: rotate(12deg) skewX(4deg); }
+    }
+
+    .fishing-hook-ui {
+      position: absolute; top: 6px; left: 50%; transform: translateX(-50%);
+      font-size: 1.4rem; z-index: 5;
+    }
+    .fishing-line-ui {
+      position: absolute; top: 34px; left: 50%;
+      width: 2px; height: 28px;
+      background: rgba(255,255,255,0.25);
+      transform: translateX(-50%);
+    }
+
+    .fish {
+      position: absolute;
+      display: flex; flex-direction: column; align-items: center;
+      z-index: 3;
+      animation: fishUp linear forwards;
+    }
+    .fish-em { font-size: 2rem; display: block; transform: rotate(270deg); }
+    .fish-badge {
+      background: var(--accent); color: #fff;
+      font-size: 0.82rem; font-weight: 900;
+      width: 23px; height: 23px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin-top: -6px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    }
+    @keyframes fishUp {
+      0%   { bottom:-70px; opacity:0; }
+      8%   { opacity:1; }
+      92%  { opacity:1; }
+      100% { bottom:108%; opacity:0; }
+    }
+    @keyframes fishCatch {
+      0%   { transform:scale(1); opacity:1; }
+      40%  { transform:scale(1.6); opacity:1; }
+      100% { transform:scale(0) translateY(-150px); opacity:0; }
+    }
+    .fish.catching { animation: fishCatch 0.45s ease forwards !important; }
+
+    .effect {
+      position: absolute; font-size: 2rem;
+      pointer-events: none; z-index: 10;
+      animation: effectFade 0.7s ease forwards;
+    }
+    @keyframes effectFade {
+      0%   { opacity:1; transform:scale(0.5); }
+      50%  { opacity:1; transform:scale(1.6); }
+      100% { opacity:0; transform:scale(2.2); }
+    }
+
+    /* Bird Blast */
+    #bird-arena { background: linear-gradient(180deg, var(--sky1) 0%, var(--sky2) 100%); }
+
+    .cloud {
+      position: absolute;
+      background: rgba(255,255,255,0.07);
+      border-radius: 999px;
+      animation: cloudDrift linear infinite;
+    }
+    @keyframes cloudDrift {
+      from { right: -220px; }
+      to   { right: 110%; }
+    }
+
+    .bird-player { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 1.8rem; z-index: 5; }
+
+    .bird {
+      position: absolute;
+      display: flex; flex-direction: column; align-items: center;
+      animation: birdFly linear forwards;
+      z-index: 3;
+    }
+    .bird-em { font-size: 2rem; display: block; animation: wingFlap 0.35s ease-in-out infinite; }
+    .bird-badge {
+      background: var(--accent2); color: #fff;
+      font-size: 0.8rem; font-weight: 900;
+      width: 22px; height: 22px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin-top: -4px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+    }
+    @keyframes birdFly {
+      from { left: 112%; }
+      to   { left: -18%; }
+    }
+    @keyframes wingFlap {
+      0%,100% { transform: scaleY(1); }
+      50%      { transform: scaleY(0.55); }
+    }
+
+    .bird-shot {
+      position: absolute; font-size: 2.2rem;
+      pointer-events: none; z-index: 10;
+      animation: shotAnim 0.6s ease forwards;
+    }
+    @keyframes shotAnim {
+      0%   { opacity:1; transform:scale(0.4) rotate(0deg); }
+      50%  { opacity:1; transform:scale(1.8) rotate(30deg); }
+      100% { opacity:0; transform:scale(2.5) rotate(60deg); }
+    }
+    .star-pop {
+      position: absolute; font-size: 1.4rem;
+      pointer-events: none; z-index: 11;
+      animation: starPop 0.7s ease forwards;
+    }
+    @keyframes starPop {
+      0%   { opacity:1; transform:scale(0.5) translateY(0); }
+      100% { opacity:0; transform:scale(2)   translateY(-40px); }
+    }
+
+    /* ══ FEEDBACK ════════════════════════════════════════════════════════════ */
+    .feedback {
+      font-size: 1rem; font-weight: 700;
+      height: 24px; margin-bottom: 8px; text-align: center;
+    }
+    .feedback.good { color: var(--green); }
+    .feedback.bad  { color: var(--red); }
+
+    /* ══ KEYBOARD ════════════════════════════════════════════════════════════ */
+    .keyboard    { display: flex; flex-direction: column; gap: 4px; }
+    .key-row     { display: flex; gap: 4px; justify-content: center; }
+    .key {
+      min-width: 40px; height: 48px;
+      border-radius: 7px;
+      background: var(--key-top);
+      border: 1px solid var(--key-border);
+      box-shadow: 0 4px 0 var(--key-shadow);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      font-size: 0.7rem; font-weight: 600;
+      color: var(--text); padding: 0 5px;
+      transition: background 0.08s, transform 0.08s, box-shadow 0.08s;
+    }
+    .key .sc { font-size: 0.58rem; color: var(--muted); line-height: 1; }
+    .key.w1 { min-width: 58px; } .key.w2 { min-width: 76px; }
+    .key.w3 { min-width: 96px; } .key.sp { min-width: 250px; }
+
+    .key.target {
+      background: var(--accent); border-color: var(--accent);
+      color: #fff; animation: keyPulse 0.65s ease-in-out infinite alternate;
+    }
+    @keyframes keyPulse {
+      from { box-shadow: 0 4px 0 var(--key-shadow), 0 0 8px rgba(0,0,0,0.2); }
+      to   { box-shadow: 0 4px 0 var(--key-shadow), 0 0 24px var(--accent); }
+    }
+    .key.kc { background:var(--green); border-color:var(--green); box-shadow:0 2px 0 var(--key-shadow); transform:translateY(2px); color:#fff; animation:none; }
+    .key.kw { background:var(--red);   border-color:var(--red);   box-shadow:0 2px 0 var(--key-shadow); transform:translateY(2px); color:#fff; animation:none; }
+
+    /* ══ OVERLAYS ════════════════════════════════════════════════════════════ */
+    .overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.88);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 100; backdrop-filter: blur(6px);
+    }
+    .overlay.hidden { display: none; }
+    .ov-card {
+      background: var(--surface); border: 2px solid var(--border);
+      border-radius: 20px; padding: 30px 36px;
+      text-align: center; max-width: 440px; width: 92%;
+    }
+    .ov-card h2 { font-size: 1.75rem; font-weight: 900; margin-bottom: 8px; }
+    .ov-card p  { color: var(--muted); font-size: 0.86rem; line-height: 1.6; margin-bottom: 18px; }
+    .final-score { font-size: 3rem; font-weight: 900; color: var(--accent); margin: 10px 0; }
+    .btn {
+      display: inline-block; padding: 10px 26px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff; border: none; border-radius: 999px;
+      font-size: 0.92rem; font-weight: 700;
+      cursor: pointer; transition: transform 0.15s, opacity 0.15s;
+    }
+    .btn:hover { transform: translateY(-2px); opacity: 0.92; }
+    .btn:active { transform: translateY(0); }
+
+    /* ══ SHARED ANIMATIONS ════════════════════════════════════════════════════ */
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      25%      { transform: translateX(-7px); }
+      75%      { transform: translateX(7px); }
+    }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+<!-- ── Quit button (shown during game) ──────────────────────────────────── -->
+<button class="quit-btn hidden" id="quit-btn">✕ Quit</button>
+
+<!-- ── Overlay (populated dynamically by showStartScreen) ───────────────── -->
+<div class="overlay hidden" id="overlay">
+  <div class="ov-card" id="ov-card"></div>
+</div>
+
+<h1>KeyBlast</h1>
+<p class="subtitle">v2 · 4 Modes · 9 Themes</p>
+
+<!-- ── Stats ───────────────────────────────────────────────────────────── -->
+<div class="stats">
+  <div class="stat"><div class="stat-value s-score"  id="el-score">0</div><div class="stat-label">Score</div></div>
+  <div class="stat"><div class="stat-value s-streak" id="el-streak">0</div><div class="stat-label">Streak</div></div>
+  <div class="stat"><div class="stat-value s-acc"    id="el-acc">100%</div><div class="stat-label">Accuracy</div></div>
+  <div class="stat"><div class="stat-value s-timer"  id="el-timer">30</div><div class="stat-label">Time</div></div>
+  <div class="stat hidden" id="lives-stat">
+    <div class="lives-display" id="el-lives">❤️❤️❤️</div>
+    <div class="stat-label">Lives</div>
+  </div>
+</div>
+
+<!-- ── Progress bar ─────────────────────────────────────────────────────── -->
+<div class="progress-bar"><div class="progress-fill" id="el-prog"></div></div>
+
+<!-- ── Game area ─────────────────────────────────────────────────────────── -->
+<div class="target-box hidden" id="target-box">
+  <div class="target-label" id="target-label">Press this key</div>
+  <div class="target-key  hidden" id="el-tkey"></div>
+  <div class="target-word hidden" id="el-tword"></div>
+</div>
+
+<div id="fishing-arena" class="arena hidden"></div>
+<div id="bird-arena"    class="arena hidden"></div>
+
+<!-- ── Feedback ──────────────────────────────────────────────────────────── -->
+<div class="feedback" id="el-fb"></div>
+
+<!-- ── Keyboard ──────────────────────────────────────────────────────────── -->
+<div class="keyboard" id="keyboard"></div>
+
+<script>
+'use strict';
+
+// ── Constants ────────────────────────────────────────────────────────────────
+const KB_ROWS = [
+  [{l:'`',s:'~'},{l:'1',s:'!'},{l:'2',s:'@'},{l:'3',s:'#'},{l:'4',s:'$'},
+   {l:'5',s:'%'},{l:'6',s:'^'},{l:'7',s:'&'},{l:'8',s:'*'},{l:'9',s:'('},
+   {l:'0',s:')'},{l:'-',s:'_'},{l:'=',s:'+'},{l:'Backspace',lbl:'⌫',cls:'w2'}],
+  [{l:'Tab',lbl:'Tab',cls:'w1'},
+   {l:'q'},{l:'w'},{l:'e'},{l:'r'},{l:'t'},{l:'y'},{l:'u'},{l:'i'},{l:'o'},{l:'p'},
+   {l:'[',s:'{'},{l:']',s:'}'},{l:'\\',s:'|',cls:'w1'}],
+  [{l:'CapsLock',lbl:'Caps',cls:'w2'},
+   {l:'a'},{l:'s'},{l:'d'},{l:'f'},{l:'g'},{l:'h'},{l:'j'},{l:'k'},{l:'l'},
+   {l:';',s:':'},{l:"'",s:'"'},{l:'Enter',lbl:'Enter',cls:'w2'}],
+  [{l:'ShiftLeft',lbl:'Shift',cls:'w3'},
+   {l:'z'},{l:'x'},{l:'c'},{l:'v'},{l:'b'},{l:'n'},{l:'m'},
+   {l:',',s:'<'},{l:'.',s:'>'},{l:'/',s:'?'},{l:'ShiftRight',lbl:'Shift',cls:'w3'}],
+  [{l:' ',lbl:'Space',cls:'sp'}]
+];
+
+const LETTERS       = 'abcdefghijklmnopqrstuvwxyz'.split('');
+const PRACTICE_KEYS = 'abcdefghijklmnopqrstuvwxyz0123456789'.split('');
+const WORDS = [
+  'the','and','for','are','but','not','you','all','can','her',
+  'was','one','out','day','get','new','now','see','way','who',
+  'cat','dog','fox','run','jump','fast','code','key','type','game',
+  'play','win','fun','star','fire','cool','rock','flip','dart','ship'
+];
+const FISH_EM  = ['🐟','🐠','🐡','🦐','🦑'];
+const BIRD_EM  = ['🐦','🦅','🦜','🦢','🦆'];
+const GAME_DUR = 30;
+const MAX_LIVES = 3;
+
+// ── State ────────────────────────────────────────────────────────────────────
+const S = {
+  mode:'keys', theme:'void', score:0, streak:0,
+  attempts:0, correct:0, charsTyped:0, timeLeft:GAME_DUR, lives:MAX_LIVES, running:false,
+  targetKey:'', targetWord:'', wordIdx:0,
+  fish:null, fishTimer:null,
+  birds:[], birdTimer:null,
+};
+
+let tickInterval = null, fbTimer = null, kfTimer = null;
+
+// ── DOM refs ─────────────────────────────────────────────────────────────────
+const $  = id => document.getElementById(id);
+const elScore   = $('el-score'),  elStreak  = $('el-streak'),
+      elAcc     = $('el-acc'),    elTimer   = $('el-timer'),
+      elLives   = $('el-lives'),  elProg    = $('el-prog'),
+      elFb      = $('el-fb'),     overlay   = $('overlay'),
+      ovCard    = $('ov-card'),   tgtBox    = $('target-box'),
+      elTKey    = $('el-tkey'),   elTWord   = $('el-tword'),
+      tgtLabel  = $('target-label'),
+      fishArena = $('fishing-arena'),
+      birdArena = $('bird-arena'),
+      livesStat = $('lives-stat');
+
+// ── Build keyboard ────────────────────────────────────────────────────────────
+const KM = {};
+(function buildKB() {
+  const kb = $('keyboard');
+  KB_ROWS.forEach(row => {
+    const r = document.createElement('div');
+    r.className = 'key-row';
+    row.forEach(k => {
+      const el = document.createElement('div');
+      el.className = 'key' + (k.cls ? ' ' + k.cls : '');
+      const lbl = k.lbl || k.l.toUpperCase();
+      el.innerHTML = k.s ? `<span class="sc">${k.s}</span>${lbl}` : lbl;
+      r.appendChild(el);
+      KM[k.l.length === 1 ? k.l.toLowerCase() : k.l] = el;
+    });
+    kb.appendChild(r);
+  });
+})();
+
+// ── Theme ─────────────────────────────────────────────────────────────────────
+function setTheme(name) {
+  document.documentElement.dataset.theme = name;
+  S.theme = name;
+  document.querySelectorAll('.theme-swatch').forEach(sw =>
+    sw.classList.toggle('active', sw.dataset.theme === name));
+}
+
+// ── Key visual helpers ────────────────────────────────────────────────────────
+function hlKey(k) { const el = KM[k.toLowerCase()]; if (el) el.classList.add('target'); }
+function clearHL() { Object.values(KM).forEach(el => el.classList.remove('target','kc','kw')); }
+function flashK(k, ok) {
+  const el = KM[k.toLowerCase()]; if (!el) return;
+  el.classList.remove('target');
+  el.classList.add(ok ? 'kc' : 'kw');
+  clearTimeout(kfTimer);
+  kfTimer = setTimeout(() => el.classList.remove('kc','kw'), 300);
+}
+function flashBox(ok) {
+  tgtBox.classList.add(ok ? 'correct' : 'wrong');
+  setTimeout(() => tgtBox.classList.remove('correct','wrong'), 320);
+}
+function fb(text, ok) {
+  elFb.textContent = text;
+  elFb.className = 'feedback ' + (ok ? 'good' : 'bad');
+  clearTimeout(fbTimer);
+  fbTimer = setTimeout(() => { elFb.textContent=''; elFb.className='feedback'; }, 700);
+}
+
+// ── Stats ─────────────────────────────────────────────────────────────────────
+function updateStats() {
+  elScore.textContent  = S.score;
+  elStreak.textContent = S.streak > 0 ? S.streak + '🔥' : '0';
+  const acc = S.attempts === 0 ? 100 : Math.round(S.correct / S.attempts * 100);
+  elAcc.textContent = acc + '%';
+}
+function updateTimer() {
+  elTimer.textContent = S.timeLeft;
+  elProg.style.width  = (S.timeLeft / GAME_DUR * 100) + '%';
+  elTimer.style.color = S.timeLeft <= 5 ? 'var(--red)' : 'var(--accent2)';
+}
+function updateLives() {
+  elLives.textContent = '❤️'.repeat(S.lives) + '🖤'.repeat(MAX_LIVES - S.lives);
+}
+function loseLife() {
+  S.lives--; updateLives();
+  fb('Miss! -1 ❤️', false);
+  if (S.lives <= 0) endGame();
+}
+function addScore(base) {
+  const bonus = Math.max(0, Math.floor(S.streak / 5)) * 2;
+  const pts = base + bonus;
+  S.score += pts; return pts;
+}
+
+// ── Arena switcher ────────────────────────────────────────────────────────────
+function showArena(which) {
+  tgtBox.classList.add('hidden');
+  fishArena.classList.add('hidden');
+  birdArena.classList.add('hidden');
+  livesStat.classList.add('hidden');
+  if (which === 'box')     tgtBox.classList.remove('hidden');
+  if (which === 'fishing') { fishArena.classList.remove('hidden'); livesStat.classList.remove('hidden'); }
+  if (which === 'birds')   { birdArena.classList.remove('hidden'); livesStat.classList.remove('hidden'); }
+}
+
+// ── Game lifecycle ────────────────────────────────────────────────────────────
+function startGame() {
+  Object.assign(S, { score:0, streak:0, attempts:0, correct:0, charsTyped:0,
+    timeLeft:GAME_DUR, lives:MAX_LIVES, running:true,
+    fish:null, fishTimer:null, birds:[], birdTimer:null });
+  updateStats(); updateTimer(); updateLives(); clearHL();
+  elTimer.style.color = 'var(--accent2)';
+  ({ keys:keysStart, words:wordsStart, fishing:fishStart, birds:birdsStart })[S.mode]();
+  tickInterval = setInterval(() => {
+    S.timeLeft--;
+    updateTimer();
+    if (S.timeLeft <= 0) endGame();
+  }, 1000);
+}
+
+function endGame() {
+  clearInterval(tickInterval);
+  S.running = false;
+  clearHL();
+  $('quit-btn').classList.add('hidden');
+  if (S.mode === 'fishing') fishStop();
+  if (S.mode === 'birds')   birdsStop();
+  const acc = S.attempts === 0 ? 100 : Math.round(S.correct / S.attempts * 100);
+  const elapsed = (GAME_DUR - S.timeLeft) || GAME_DUR; // seconds actually played
+  const wpm = Math.round((S.charsTyped / 5) / (elapsed / 60));
+  const msg = S.score >= 400 ? '🏆 Keyboard wizard!' :
+              S.score >= 200 ? '🎯 Great job!' : '💪 Keep practicing!';
+  const modeName = { keys:'Key Mode', words:'Word Mode', fishing:'Fishing', birds:'Bird Blast' }[S.mode];
+  ovCard.innerHTML = `
+    <h2>Time's Up!</h2>
+    <div class="final-score">${S.score}</div>
+    <div style="display:flex;justify-content:center;gap:24px;margin:12px 0 6px">
+      <div style="text-align:center">
+        <div style="font-size:1.8rem;font-weight:900;color:var(--accent2)">${wpm}</div>
+        <div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em">WPM</div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-size:1.8rem;font-weight:900;color:var(--green)">${acc}%</div>
+        <div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em">Accuracy</div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-size:1.8rem;font-weight:900;color:var(--yellow)">${S.streak}🔥</div>
+        <div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em">Streak</div>
+      </div>
+    </div>
+    <p style="margin-bottom:16px">Mode: <strong>${modeName}</strong><br/>${msg}</p>
+    <button class="btn" id="restart-btn">Play Again</button>`;
+  overlay.classList.remove('hidden');
+  $('restart-btn').addEventListener('click', () => showStartScreen(), { once: true });
+}
+
+// ── Mode: Keys ────────────────────────────────────────────────────────────────
+function keysStart() {
+  showArena('box');
+  elTKey.classList.remove('hidden'); elTWord.classList.add('hidden');
+  tgtLabel.textContent = 'Press this key';
+  keysNext();
+}
+function keysNext() {
+  clearHL();
+  S.targetKey = PRACTICE_KEYS[Math.floor(Math.random() * PRACTICE_KEYS.length)];
+  elTKey.textContent = S.targetKey.toUpperCase();
+  hlKey(S.targetKey);
+}
+function keysHandle(p) {
+  S.attempts++;
+  if (p === S.targetKey) {
+    S.correct++; S.charsTyped++;
+    const pts = addScore(10); S.streak++;
+    flashK(p, true); flashBox(true);
+    fb(`+${pts}` + (S.streak >= 5 ? ` 🔥×${S.streak}` : ''), true);
+    updateStats(); keysNext();
+  } else {
+    S.streak = 0; flashK(p, false); flashBox(false);
+    fb('Wrong!', false); updateStats();
+  }
+}
+
+// ── Mode: Words ───────────────────────────────────────────────────────────────
+function wordsStart() {
+  showArena('box');
+  elTKey.classList.add('hidden'); elTWord.classList.remove('hidden');
+  tgtLabel.textContent = 'Type this word';
+  wordsNext();
+}
+function wordsNext() {
+  clearHL();
+  S.targetWord = WORDS[Math.floor(Math.random() * WORDS.length)];
+  S.wordIdx = 0;
+  renderWord(); hlKey(S.targetWord[0]);
+}
+function renderWord() {
+  elTWord.innerHTML = '';
+  S.targetWord.split('').forEach((ch, i) => {
+    const sp = document.createElement('span');
+    sp.className = 'char-cell' + (i < S.wordIdx ? ' done' : i === S.wordIdx ? ' current' : '');
+    sp.textContent = ch.toUpperCase();
+    elTWord.appendChild(sp);
+  });
+}
+function wordsHandle(p) {
+  const exp = S.targetWord[S.wordIdx];
+  if (p === exp) {
+    S.attempts++; S.correct++; S.charsTyped++;
+    flashK(p, true);
+    S.wordIdx++;
+    if (S.wordIdx >= S.targetWord.length) {
+      const pts = addScore(S.targetWord.length * 10); S.streak++;
+      flashBox(true); fb(`Word! +${pts}`, true);
+      updateStats();
+      setTimeout(() => wordsNext(), 140);
+    } else {
+      clearHL(); renderWord(); hlKey(S.targetWord[S.wordIdx]);
+      updateStats();
+    }
+  } else {
+    S.attempts++; S.streak = 0;
+    flashK(p, false); flashBox(false); fb('Wrong!', false);
+    S.wordIdx = 0; clearHL(); renderWord(); hlKey(S.targetWord[0]);
+    updateStats();
+  }
+}
+
+// ── Mode: Fishing ─────────────────────────────────────────────────────────────
+function fishStart() {
+  showArena('fishing');
+  fishArena.innerHTML = '<div class="fishing-hook-ui">🪝</div><div class="fishing-line-ui"></div>';
+  for (let i = 0; i < 14; i++) {
+    const b = document.createElement('div');
+    b.className = 'bubble';
+    const sz = 4 + Math.random() * 10;
+    b.style.cssText = `width:${sz}px;height:${sz}px;left:${Math.random()*90}%;` +
+      `animation-duration:${3+Math.random()*5}s;animation-delay:-${Math.random()*7}s;`;
+    fishArena.appendChild(b);
+  }
+  [5,14,24,78,87,93].forEach(p => {
+    const sw = document.createElement('div');
+    sw.className = 'seaweed';
+    sw.style.cssText = `left:${p}%;height:${45+Math.random()*30}px;`;
+    fishArena.appendChild(sw);
+  });
+  S.fish = null;
+  spawnFish();
+}
+function spawnFish() {
+  if (!S.running) return;
+  const letter = LETTERS[Math.floor(Math.random() * LETTERS.length)];
+  const x      = 8 + Math.random() * 72;
+  const phase  = 1 - S.timeLeft / GAME_DUR;
+  const dur    = Math.max(2200, 5500 - phase * 2800);
+  const em     = FISH_EM[Math.floor(Math.random() * FISH_EM.length)];
+
+  const el = document.createElement('div');
+  el.className = 'fish';
+  el.style.cssText = `left:${x}%;animation-duration:${dur}ms;`;
+  el.innerHTML = `<span class="fish-em">${em}</span><span class="fish-badge">${letter.toUpperCase()}</span>`;
+  fishArena.appendChild(el);
+
+  const obj = { letter, el, caught: false };
+  S.fish = obj;
+  clearHL(); hlKey(letter);
+
+  el.addEventListener('animationend', () => {
+    if (!S.running || obj !== S.fish || obj.caught) return;
+    el.remove(); S.fish = null; S.streak = 0;
+    loseLife(); updateStats();
+    if (S.running && S.lives > 0) S.fishTimer = setTimeout(spawnFish, 350);
+  });
+}
+function fishHandle(p) {
+  if (!S.fish || p !== S.fish.letter) return;
+  const obj = S.fish; S.fish = null; obj.caught = true;
+  S.attempts++; S.correct++; S.charsTyped++;
+  const pts = addScore(15); S.streak++;
+  clearHL(); fb(`🎣 +${pts}`, true); updateStats(); flashK(p, true);
+
+  // Freeze fish at its current rendered position
+  obj.el.style.animationPlayState = 'paused';
+  const ar = fishArena.getBoundingClientRect();
+  const fr = obj.el.getBoundingClientRect();
+  const fishTop  = fr.top  - ar.top;
+  const fishLeft = fr.left - ar.left;
+  const fishMidX = fishLeft + fr.width  / 2;
+  const fishMidY = fishTop  + fr.height * 0.42;
+
+  obj.el.style.animation = 'none';
+  obj.el.style.bottom = 'auto';
+  obj.el.style.top    = fishTop  + 'px';
+  obj.el.style.left   = fishLeft + 'px';
+
+  // Anchor point: below the hook UI at top-center
+  const anchorX = ar.width / 2;
+  const anchorY = 36;
+
+  // SVG rope — draws directly between two points, no rotation math needed
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:6;overflow:visible;';
+  const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+  line.setAttribute('x1', anchorX); line.setAttribute('y1', anchorY);
+  line.setAttribute('x2', anchorX); line.setAttribute('y2', anchorY);
+  line.setAttribute('stroke', 'rgba(200,175,110,0.92)');
+  line.setAttribute('stroke-width', '2.5');
+  line.setAttribute('stroke-linecap', 'round');
+  svg.appendChild(line);
+  fishArena.appendChild(svg);
+
+  // Hook tip emoji that rides the end of the rope
+  const tip = document.createElement('div');
+  tip.textContent = '🪝';
+  tip.style.cssText = 'position:absolute;z-index:7;font-size:.85rem;line-height:1;pointer-events:none;' +
+    `left:${anchorX - 10}px;top:${anchorY - 4}px;`;
+  fishArena.appendChild(tip);
+
+  // Phase 1: extend rope from anchor toward fish
+  const extDur = 220, extStart = performance.now();
+  function extend(now) {
+    const t = Math.min(1, (now - extStart) / extDur);
+    const e = t * t; // ease-in
+    const cx = anchorX + (fishMidX - anchorX) * e;
+    const cy = anchorY + (fishMidY - anchorY) * e;
+    line.setAttribute('x2', cx);
+    line.setAttribute('y2', cy);
+    tip.style.left = (cx - 10) + 'px';
+    tip.style.top  = (cy - 6)  + 'px';
+    if (t < 1) requestAnimationFrame(extend);
+    else setTimeout(pullIn, 60);
+  }
+  requestAnimationFrame(extend);
+
+  // Phase 2: reel fish up to hook
+  function pullIn() {
+    const pullDur = 340, pullStart = performance.now();
+    const tgtLeft = anchorX - fr.width / 2;
+    function pull(now) {
+      const t = Math.min(1, (now - pullStart) / pullDur);
+      const e = t * t; // ease-in
+      obj.el.style.top  = (fishTop  + (-100 - fishTop)  * e) + 'px';
+      obj.el.style.left = (fishLeft + (tgtLeft - fishLeft) * e) + 'px';
+      const rx = fishMidX + (anchorX - fishMidX) * e;
+      const ry = fishMidY + (anchorY - fishMidY) * e;
+      line.setAttribute('x2', rx); line.setAttribute('y2', ry);
+      tip.style.left = (rx - 10) + 'px';
+      tip.style.top  = (ry - 6)  + 'px';
+      if (t < 1) requestAnimationFrame(pull);
+      else { obj.el.remove(); svg.remove(); tip.remove(); if (S.running) spawnFish(); }
+    }
+    requestAnimationFrame(pull);
+  }
+}
+function fishStop() {
+  clearTimeout(S.fishTimer);
+  if (S.fish) { S.fish.el.remove(); S.fish = null; }
+}
+
+// ── Mode: Birds ───────────────────────────────────────────────────────────────
+function birdsStart() {
+  showArena('birds');
+  birdArena.innerHTML = '<div class="bird-player">🎯</div>';
+  [{top:'15%',w:'110px',h:'38px',dur:'18s',del:'0s'},
+   {top:'35%',w:'75px', h:'26px',dur:'25s',del:'-9s'},
+   {top:'60%',w:'95px', h:'32px',dur:'21s',del:'-15s'}
+  ].forEach(c => {
+    const cl = document.createElement('div');
+    cl.className = 'cloud';
+    cl.style.cssText = `top:${c.top};width:${c.w};height:${c.h};animation-duration:${c.dur};animation-delay:${c.del};`;
+    birdArena.appendChild(cl);
+  });
+  S.birds = [];
+  scheduleBird();
+}
+function scheduleBird() {
+  if (!S.running) return;
+  const phase    = 1 - S.timeLeft / GAME_DUR;
+  const maxBirds = phase < 0.3 ? 1 : phase < 0.65 ? 2 : 3;
+  const interval = Math.max(700, 2800 - phase * 1800);
+  S.birdTimer = setTimeout(() => {
+    if (S.running && S.birds.length < maxBirds) spawnBird();
+    scheduleBird();
+  }, interval);
+}
+function spawnBird() {
+  const used = S.birds.map(b => b.letter);
+  let letter;
+  do { letter = LETTERS[Math.floor(Math.random() * LETTERS.length)]; }
+  while (used.includes(letter) && used.length < LETTERS.length);
+
+  const top   = 8 + Math.random() * 68;
+  const phase = 1 - S.timeLeft / GAME_DUR;
+  const dur   = Math.max(1800, 6500 - phase * 3800);
+  const em    = BIRD_EM[Math.floor(Math.random() * BIRD_EM.length)];
+
+  const el = document.createElement('div');
+  el.className = 'bird';
+  el.style.cssText = `top:${top}%;animation-duration:${dur}ms;`;
+  el.innerHTML = `<span class="bird-em">${em}</span><span class="bird-badge">${letter.toUpperCase()}</span>`;
+  birdArena.appendChild(el);
+
+  const obj = { letter, el, shot: false };
+  S.birds.push(obj);
+  updateBirdHint();
+
+  el.addEventListener('animationend', () => {
+    if (!S.running || obj.shot) return;
+    el.remove();
+    S.birds = S.birds.filter(b => b !== obj);
+    S.streak = 0; loseLife(); updateStats(); updateBirdHint();
+  });
+}
+function updateBirdHint() {
+  clearHL();
+  if (S.birds.length > 0) hlKey(S.birds[0].letter);
+}
+function birdsHandle(p) {
+  const obj = S.birds.find(b => b.letter === p);
+  if (!obj) return;
+  obj.shot = true;
+  S.birds = S.birds.filter(b => b !== obj);
+  S.attempts++; S.correct++; S.charsTyped++;
+  const pts = addScore(20); S.streak++;
+  fb(`💥 +${pts}`, true); updateStats(); flashK(p, true); updateBirdHint();
+
+  const r1 = obj.el.getBoundingClientRect();
+  const r2 = birdArena.getBoundingClientRect();
+  const lft = r1.left - r2.left, top = r1.top - r2.top;
+
+  const boom = document.createElement('div');
+  boom.className = 'bird-shot'; boom.textContent = '💥';
+  boom.style.cssText = `left:${lft}px;top:${top}px;`;
+  birdArena.appendChild(boom);
+
+  const star = document.createElement('div');
+  star.className = 'star-pop'; star.textContent = '⭐';
+  star.style.cssText = `left:${lft+22}px;top:${top-18}px;`;
+  birdArena.appendChild(star);
+
+  obj.el.remove();
+  boom.addEventListener('animationend', () => boom.remove());
+  star.addEventListener('animationend', () => star.remove());
+}
+function birdsStop() {
+  clearTimeout(S.birdTimer); S.birdTimer = null;
+  S.birds.forEach(b => b.el.remove()); S.birds = [];
+}
+
+// ── Input ─────────────────────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (!S.running) return;
+  if (['Control','Alt','Meta','Shift','CapsLock'].includes(e.key)) return;
+  e.preventDefault();
+  const p = e.key === ' ' ? ' ' : e.key.toLowerCase();
+  if (p.length !== 1) return;
+  ({ keys:keysHandle, words:wordsHandle, fishing:fishHandle, birds:birdsHandle })[S.mode](p);
+});
+
+// ── Start screen ──────────────────────────────────────────────────────────────
+const THEMES_META = [
+  {id:'void',   color:'#6c63ff'},
+  {id:'ocean',  color:'#00b4d8'},
+  {id:'neon',   color:'#ff00ff'},
+  {id:'forest', color:'#39d353'},
+  {id:'sunset', color:'#ff6b35'},
+  {id:'candy',  color:'#ff79c6'},
+  {id:'lava',   color:'#ff4500'},
+  {id:'arctic', color:'#0077b6'},
+  {id:'ivory',  color:'#8b5cf6', outline:true},
+];
+const MODES_META = [
+  {id:'keys',    icon:'🎯', label:'Key Mode',   desc:'Press the lit key'},
+  {id:'words',   icon:'📝', label:'Word Mode',  desc:'Type full words'},
+  {id:'fishing', icon:'🎣', label:'Fishing',    desc:'Catch rising fish'},
+  {id:'birds',   icon:'🐦', label:'Bird Blast', desc:'Shoot flying birds'},
+];
+
+function showStartScreen() {
+  const swatches = THEMES_META.map(t =>
+    `<div class="theme-swatch${t.id === S.theme ? ' active' : ''}" data-theme="${t.id}"
+      title="${t.id}" style="background:${t.color}${t.outline ? ';outline:1px solid #aaa' : ''}"></div>`
+  ).join('');
+
+  const cards = MODES_META.map(m =>
+    `<div class="mode-card${m.id === S.mode ? ' active' : ''}" data-mode="${m.id}">
+       <span class="mc-icon">${m.icon}</span>${m.label}
+       <span class="mc-desc">${m.desc}</span>
+     </div>`
+  ).join('');
+
+  ovCard.innerHTML = `
+    <h2>⌨️ KeyBlast v2</h2>
+    <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;">Choose Mode</div>
+    <div class="mode-grid">${cards}</div>
+    <div class="theme-row">
+      <span class="theme-label">Pick a Theme</span>
+      ${swatches}
+    </div>
+    <button class="btn" id="start-btn">Start Game</button>`;
+
+  // wire mode cards
+  ovCard.querySelectorAll('.mode-card').forEach(card =>
+    card.addEventListener('click', () => {
+      ovCard.querySelectorAll('.mode-card').forEach(c => c.classList.remove('active'));
+      card.classList.add('active');
+      S.mode = card.dataset.mode;
+    }));
+
+  // wire theme swatches
+  ovCard.querySelectorAll('.theme-swatch').forEach(sw =>
+    sw.addEventListener('click', () => {
+      setTheme(sw.dataset.theme);
+      ovCard.querySelectorAll('.theme-swatch').forEach(s =>
+        s.classList.toggle('active', s.dataset.theme === sw.dataset.theme));
+    }));
+
+  // wire start
+  $('start-btn').addEventListener('click', () => {
+    overlay.classList.add('hidden');
+    $('quit-btn').classList.remove('hidden');
+    startGame();
+  }, { once: true });
+
+  overlay.classList.remove('hidden');
+}
+
+// ── Quit button ───────────────────────────────────────────────────────────────
+$('quit-btn').addEventListener('click', () => {
+  if (!S.running) return;
+  clearInterval(tickInterval);
+  S.running = false;
+  clearHL();
+  $('quit-btn').classList.add('hidden');
+  if (S.mode === 'fishing') fishStop();
+  if (S.mode === 'birds')   birdsStop();
+  showStartScreen();
+});
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+setTheme('void');
+showStartScreen();
+</script>
+</body>
+</html>
