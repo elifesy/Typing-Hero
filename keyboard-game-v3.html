@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; base-uri 'self'; form-action 'none'; frame-ancestors 'none';" />
   <title>KeyBlast v3 — Keyboard Learning Game</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -522,7 +523,12 @@ const KM = {};
       const lbl = k.lbl || k.l.toUpperCase();
       const mainSpan = document.createElement('span');
       mainSpan.className='key-main';
-      mainSpan.innerHTML = k.s ? `<span class="sc">${k.s}</span>${lbl}` : lbl;
+      if (k.s) {
+        const sc = document.createElement('span');
+        sc.className = 'sc'; sc.textContent = k.s;
+        mainSpan.appendChild(sc);
+      }
+      mainSpan.appendChild(document.createTextNode(lbl));
       el.appendChild(mainSpan);
       const physKey = k.l.length===1 ? k.l.toLowerCase() : (k.l===' '?' ':null);
       const arChar  = physKey ? AR_MAP[physKey] : null;
@@ -777,7 +783,10 @@ function spawnFish(){
   const isAr=S.lang==='ar';
   const el=document.createElement('div'); el.className='fish';
   el.style.cssText=`left:${x}%;animation-duration:${dur}ms;`;
-  el.innerHTML=`<span class="fish-em">${em}</span><span class="fish-badge"${isAr?' style="font-family:Arial,sans-serif"':''}>${letter}</span>`;
+  const femSpan=document.createElement('span'); femSpan.className='fish-em'; femSpan.textContent=em;
+  const fbadge=document.createElement('span'); fbadge.className='fish-badge'; fbadge.textContent=letter;
+  if(isAr) fbadge.style.fontFamily='Arial,sans-serif';
+  el.appendChild(femSpan); el.appendChild(fbadge);
   fishArena.appendChild(el);
   const obj={letter,el,caught:false}; S.fish=obj; clearHL(); hlTarget(letter);
   el.addEventListener('animationend',()=>{
@@ -874,7 +883,10 @@ function spawnBird(){
   const isAr=S.lang==='ar';
   const el=document.createElement('div'); el.className='bird';
   el.style.cssText=`top:${top}%;animation-duration:${dur}ms;`;
-  el.innerHTML=`<span class="bird-em">${em}</span><span class="bird-badge"${isAr?' style="font-family:Arial,sans-serif"':''}>${letter}</span>`;
+  const bemSpan=document.createElement('span'); bemSpan.className='bird-em'; bemSpan.textContent=em;
+  const bbadge=document.createElement('span'); bbadge.className='bird-badge'; bbadge.textContent=letter;
+  if(isAr) bbadge.style.fontFamily='Arial,sans-serif';
+  el.appendChild(bemSpan); el.appendChild(bbadge);
   birdArena.appendChild(el);
   const obj={letter,el,shot:false}; S.birds.push(obj); updateBirdHint();
   el.addEventListener('animationend',()=>{
