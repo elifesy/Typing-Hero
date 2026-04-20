@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calorie Counter</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --accent:#1D9E75; --accent-bg:#E1F5EE; --accent-text:#085041; --accent-bar:#1D9E75;
+    --bg:#f7f6f2; --surface:#ffffff; --text:#1a1a18; --text-muted:#888780; --text-hint:#b4b2a9;
+    --border:rgba(0,0,0,0.10); --border-strong:rgba(0,0,0,0.20);
+    --radius:12px; --radius-sm:8px; --danger:#E24B4A; --warn:#BA7517;
+  }
+  body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; padding:2rem 1rem 4rem; transition:background 0.6s ease; }
+  body.dark-theme .card { background:rgba(255,255,255,0.10) !important; border-color:rgba(255,255,255,0.18) !important; backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); }
+  body.dark-theme .stat-card { background:rgba(255,255,255,0.12) !important; border-color:rgba(255,255,255,0.18) !important; backdrop-filter:blur(14px); }
+  body.dark-theme .macro-pill { background:rgba(255,255,255,0.08) !important; border-color:rgba(255,255,255,0.15) !important; }
+  body.dark-theme .suggestions { background:rgba(15,8,35,0.94) !important; border-color:rgba(255,255,255,0.2) !important; backdrop-filter:blur(16px); }
+  body.dark-theme .sug-item:hover { background:rgba(255,255,255,0.08) !important; }
+  body.dark-theme input[type="text"], body.dark-theme input[type="number"], body.dark-theme select { background:rgba(255,255,255,0.12) !important; border-color:rgba(255,255,255,0.28) !important; color:#fff !important; }
+  body.dark-theme .header h1, body.dark-theme .log-name, body.dark-theme .goal-text, body.dark-theme .sug-name { color:#fff !important; }
+  body.dark-theme .stat-label, body.dark-theme .card-label, body.dark-theme .header p, body.dark-theme .unit, body.dark-theme .log-detail, body.dark-theme .sug-cal, body.dark-theme .macro-pill span, body.dark-theme .log-empty { color:rgba(255,255,255,0.60) !important; }
+  body.dark-theme .stat-value { color:#fff !important; }
+  body.dark-theme .del-btn { color:rgba(255,255,255,0.4) !important; }
+  body.dark-theme .del-btn:hover { color:#ff7b7b !important; background:rgba(255,80,80,0.15) !important; }
+  body.dark-theme .bar-bg { background:rgba(255,255,255,0.12) !important; border-color:rgba(255,255,255,0.1) !important; }
+  body.dark-theme .theme-btn { background:rgba(255,255,255,0.10) !important; border-color:rgba(255,255,255,0.30) !important; color:rgba(255,255,255,0.85) !important; }
+  body.dark-theme .portion-chip:not(.selected) { background:rgba(255,255,255,0.1) !important; }
+  body.dark-theme .macro-pill strong { color:#fff !important; }
+  body.dark-theme .sug-tag { background:rgba(255,255,255,0.12) !important; color:rgba(255,255,255,0.55) !important; }
+  body.dark-theme .portion-hint { background:rgba(255,255,255,0.10) !important; }
+  body.dark-theme .portion-hint-title { color:rgba(255,255,255,0.7) !important; }
+  .container { max-width:640px; margin:0 auto; }
+  .header { margin-bottom:1.75rem; }
+  .header h1 { font-size:2rem; font-weight:600; letter-spacing:-0.03em; margin-bottom:4px; }
+  .header p { font-size:14px; color:var(--text-muted); }
+  .themes { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:1.5rem; }
+  .theme-btn { padding:7px 16px; border-radius:20px; border:1.5px solid var(--border-strong); font-size:13px; font-family:'DM Sans',sans-serif; font-weight:500; cursor:pointer; transition:all 0.18s; background:var(--surface); color:var(--text-muted); }
+  .theme-btn.active { border-color:var(--accent); background:var(--accent-bg); color:var(--accent-text); }
+  .stats { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:1.25rem; }
+  .stat-card { background:var(--surface); border:0.5px solid var(--border); border-radius:var(--radius); padding:14px 16px; text-align:center; }
+  .stat-label { font-size:11px; font-weight:500; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:6px; }
+  .stat-value { font-size:26px; font-weight:600; font-family:'DM Sans',sans-serif; letter-spacing:-0.02em; font-variant-numeric:tabular-nums; }
+  .card { background:var(--surface); border:0.5px solid var(--border); border-radius:var(--radius); padding:1.25rem; margin-bottom:1rem; }
+  .card-label { font-size:11px; font-weight:500; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:12px; }
+  .goal-row { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+  .goal-text { font-size:14px; color:var(--text); flex:1; }
+  input[type="number"] { padding:8px 12px; border:1px solid var(--border-strong); border-radius:var(--radius-sm); font-size:14px; font-family:'DM Mono',monospace; background:var(--bg); color:var(--text); outline:none; width:90px; transition:border-color 0.15s,box-shadow 0.15s; }
+  input[type="number"]:focus { border-color:var(--accent); box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent); }
+  .unit { font-size:13px; color:var(--text-muted); }
+  .bar-bg { height:8px; background:var(--bg); border-radius:10px; overflow:hidden; border:0.5px solid var(--border); }
+  .bar-fill { height:100%; border-radius:10px; transition:width 0.4s cubic-bezier(.4,0,.2,1),background 0.3s; }
+  .macros { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:10px; }
+  .macro-pill { background:var(--bg); border-radius:var(--radius-sm); padding:8px 10px; text-align:center; border:0.5px solid var(--border); }
+  .macro-pill span { display:block; font-size:11px; color:var(--text-muted); margin-bottom:2px; }
+  .macro-pill strong { font-size:14px; font-family:'DM Sans',sans-serif; font-variant-numeric:tabular-nums; }
+  .food-row { display:flex; gap:8px; align-items:flex-start; flex-wrap:wrap; }
+  .food-wrap { flex:1; min-width:180px; position:relative; }
+  input[type="text"] { width:100%; padding:10px 14px; border:1px solid var(--border-strong); border-radius:var(--radius-sm); font-size:15px; font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); outline:none; transition:border-color 0.15s,box-shadow 0.15s; }
+  input[type="text"]:focus { border-color:var(--accent); box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent); }
+  input[type="text"].error { border-color:var(--danger); box-shadow:0 0 0 3px rgba(226,75,74,0.15); }
+  .portion-hint { margin-top:10px; background:var(--accent-bg); border-radius:var(--radius-sm); padding:10px 12px; display:none; }
+  .portion-hint-title { font-size:11px; font-weight:600; color:var(--accent-text); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:8px; }
+  .portion-chips { display:flex; flex-wrap:wrap; gap:6px; }
+  .portion-chip { padding:5px 12px; border-radius:20px; font-size:12px; font-weight:500; cursor:pointer; border:1.5px solid var(--accent); color:var(--accent-text); background:var(--surface); transition:all 0.15s; white-space:nowrap; }
+  .portion-chip:hover { opacity:0.8; }
+  .portion-chip.selected { background:var(--accent); color:#fff; border-color:var(--accent); }
+  select { padding:9px 8px; border:1px solid var(--border-strong); border-radius:var(--radius-sm); font-size:14px; font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); outline:none; cursor:pointer; }
+  .qty-wrap { display:flex; gap:6px; align-items:center; }
+  #qtyInput { width:78px; }
+  .add-btn { padding:10px 20px; border-radius:var(--radius-sm); border:none; font-size:15px; font-weight:500; font-family:'DM Sans',sans-serif; cursor:pointer; color:#fff; transition:opacity 0.15s,transform 0.1s; white-space:nowrap; background:var(--accent); }
+  .add-btn:hover { opacity:0.88; }
+  .add-btn:active { transform:scale(0.97); }
+  .suggestions { position:absolute; top:calc(100% + 4px); left:0; right:0; background:var(--surface); border:1px solid var(--border-strong); border-radius:var(--radius-sm); z-index:20; overflow:hidden; box-shadow:0 8px 24px rgba(0,0,0,0.10); display:none; max-height:320px; overflow-y:auto; }
+  .sug-item { padding:10px 14px; cursor:pointer; font-size:14px; display:flex; justify-content:space-between; align-items:center; border-bottom:0.5px solid var(--border); transition:background 0.1s; gap:8px; }
+  .sug-item:last-child { border-bottom:none; }
+  .sug-item:hover { background:var(--bg); }
+  .sug-left { display:flex; align-items:center; gap:8px; flex:1; min-width:0; }
+  .sug-name { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .sug-tag { font-size:11px; color:var(--text-hint); background:var(--bg); padding:2px 6px; border-radius:10px; white-space:nowrap; }
+  .sug-cal { font-size:12px; font-family:'DM Mono',monospace; color:var(--text-muted); white-space:nowrap; }
+  .log-empty { font-size:14px; color:var(--text-hint); text-align:center; padding:2rem 0; }
+  .log-item { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:0.5px solid var(--border); animation:fadeIn 0.2s ease; }
+  .log-item:last-child { border-bottom:none; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:none} }
+  .log-icon { width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; }
+  .log-name { font-size:14px; font-weight:500; }
+  .log-detail { font-size:12px; color:var(--text-muted); font-family:'DM Mono',monospace; margin-top:2px; }
+  .log-cal { font-size:14px; font-weight:600; font-family:'DM Sans',sans-serif; font-variant-numeric:tabular-nums; margin-right:6px; white-space:nowrap; }
+  .del-btn { background:none; border:none; cursor:pointer; font-size:15px; color:var(--text-hint); padding:4px 6px; border-radius:6px; transition:color 0.15s,background 0.15s; line-height:1; flex-shrink:0; }
+  .del-btn:hover { color:var(--danger); background:#fdf0f0; }
+  .tip { border-left:3px solid var(--accent); border-radius:0 var(--radius-sm) var(--radius-sm) 0; background:var(--accent-bg); padding:12px 16px; font-size:13.5px; color:var(--accent-text); line-height:1.65; margin-top:1rem; transition:border-color 0.3s,background 0.3s,color 0.3s; }
+  @media(max-width:480px){
+    body{padding:1.25rem 0.75rem 3rem;}
+    .header h1{font-size:1.5rem;}
+    .stats{gap:8px;}
+    .stat-value{font-size:20px;}
+    .food-row{flex-direction:column;}
+    .add-btn,.qty-wrap{width:100%;}
+    #qtyInput{flex:1;}
+  }
+
+  /* Language toggle */
+  .lang-toggle { display:flex; gap:6px; margin-bottom:1.2rem; }
+  .lang-btn { padding:6px 18px; border-radius:20px; border:1.5px solid rgba(255,255,255,0.30); font-size:13px; font-family:'DM Sans',sans-serif; font-weight:500; cursor:pointer; background:rgba(255,255,255,0.10); color:rgba(255,255,255,0.75); transition:all 0.18s; }
+  .lang-btn.active { background:rgba(255,255,255,0.25); border-color:rgba(255,255,255,0.65); color:#fff; font-weight:600; }
+  /* RTL support */
+  body.rtl { direction:rtl; }
+  body.rtl .header h1 { letter-spacing:0; }
+  body.rtl .tip { border-left:none; border-right:3px solid; border-radius:var(--radius-sm) 0 0 var(--radius-sm); }
+  body.rtl .log-icon { margin-right:0; margin-left:0; }
+  body.rtl .sug-left { flex-direction:row-reverse; }
+  body.rtl .goal-row { flex-direction:row-reverse; }
+  body.rtl .food-row { flex-direction:row-reverse; flex-wrap:wrap; }
+  body.rtl .qty-wrap { flex-direction:row-reverse; }
+  body.rtl .log-item { flex-direction:row-reverse; }
+  body.rtl .stat-card { direction:rtl; }
+  body.rtl input[type="text"], body.rtl input[type="number"] { text-align:right; }
+  body.rtl .themes { flex-direction:row-reverse; }
+  body.rtl .lang-toggle { flex-direction:row-reverse; }
+  body.rtl .portion-chips { flex-direction:row-reverse; }
+  body.rtl .macros { direction:rtl; }
+  body.rtl .sug-item { flex-direction:row-reverse; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>Calorie Counter</h1>
+    <p>Track what you eat — accurate portions, better results.</p>
+  </div>
+
+  <div class="lang-toggle" id="langToggle">
+    <button class="lang-btn active" onclick="setLang('en')">EN</button>
+    <button class="lang-btn" onclick="setLang('ar')">ع</button>
+  </div>
+  <div class="themes" id="themeSelector"></div>
+
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-label">Consumed</div>
+      <div class="stat-value" id="consumed" style="color:var(--accent)">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Goal</div>
+      <div class="stat-value" id="goalDisplay" style="color:var(--text-muted)">2000</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Remaining</div>
+      <div class="stat-value" id="remaining" style="color:var(--accent)">2000</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-label" id="labelGoal">Daily goal</div>
+    <div class="goal-row">
+      <div class="goal-text">Set your daily calorie target</div>
+      <input type="number" id="goalInput" value="2000" min="500" max="6000">
+      <span class="unit">kcal</span>
+    </div>
+    <div class="bar-bg"><div class="bar-fill" id="barFill" style="width:0%"></div></div>
+    <div class="macros">
+      <div class="macro-pill"><span>Protein est.</span><strong id="macroP">0g</strong></div>
+      <div class="macro-pill"><span>Carbs est.</span><strong id="macroC">0g</strong></div>
+      <div class="macro-pill"><span>Fat est.</span><strong id="macroF">0g</strong></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-label" id="labelAddFood">Add food</div>
+    <div class="food-row">
+      <div class="food-wrap">
+        <input type="text" id="foodInput" placeholder="Search food (apple, rice, egg…)">
+        <div class="suggestions" id="suggestions"></div>
+      </div>
+      <div class="qty-wrap">
+        <input type="number" id="qtyInput" value="100" min="0.1" step="any">
+        <select id="unitSelect">
+          <option value="1">g</option>
+          <option value="1">ml</option>
+          <option value="28.35">oz</option>
+          <option value="453.6">lb</option>
+          <option value="1">piece</option>
+        </select>
+      </div>
+      <button class="add-btn" id="addBtn">+ Add</button>
+    </div>
+    <div class="portion-hint" id="portionHint">
+      <div class="portion-hint-title" id="portionHintTitle">Typical portion sizes</div>
+      <div class="portion-chips" id="portionChips"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-label" id="labelLog">Today's log</div>
+    <div id="logList"><div class="log-empty">No food logged yet — add something above!</div></div>
+  </div>
+
+  <div class="tip" id="tipBox">Start logging meals to receive personalized tips and encouragement!</div>
+</div>
+
+<script>
+const themes=[
+  {name:"🌸 Dream",
+   accent:"#d87ef5",
+   bg:"rgba(216,126,245,0.18)",
+   text:"#f3e0ff",
+   bar:"linear-gradient(90deg,#f472b6,#a78bfa,#60a5fa)",
+   bodyBg:"linear-gradient(135deg,#fbc2eb 0%,#e0abff 20%,#c4b5fd 45%,#93c5fd 70%,#fbcfe8 100%)",
+   dark:true},
+  {name:"🌃 Midnight",
+   accent:"#a5b4fc",
+   bg:"rgba(139,92,246,0.18)",
+   text:"#e0e7ff",
+   bar:"linear-gradient(90deg,#4f46e5,#7c3aed,#a855f7,#6366f1)",
+   bodyBg:"linear-gradient(135deg,#0a0618 0%,#1e1254 25%,#2d1b69 50%,#0f172a 75%,#1a0a3d 100%)",
+   dark:true},
+  {name:"🌊 Abyss",
+   accent:"#34d8c8",
+   bg:"rgba(52,216,200,0.15)",
+   text:"#ccfbf1",
+   bar:"linear-gradient(90deg,#06b6d4,#0ea5e9,#34d8c8,#6ee7b7)",
+   bodyBg:"linear-gradient(135deg,#011627 0%,#012a4a 20%,#023e6b 45%,#01162c 70%,#032d60 100%)",
+   dark:true},
+  {name:"🍑 Sorbet",
+   accent:"#fb923c",
+   bg:"rgba(251,146,60,0.15)",
+   text:"#fff0e0",
+   bar:"linear-gradient(90deg,#f43f5e,#fb923c,#fbbf24,#f472b6)",
+   bodyBg:"linear-gradient(135deg,#1a0010 0%,#3b0021 18%,#6b1b3a 38%,#c2185b 58%,#f06292 78%,#ff8a65 100%)",
+   dark:true},
+  {name:"🌲 Forest",
+   accent:"#4ade80",
+   bg:"rgba(74,222,128,0.13)",
+   text:"#dcfce7",
+   bar:"linear-gradient(90deg,#16a34a,#4ade80,#86efac,#22d3ee)",
+   bodyBg:"linear-gradient(135deg,#052e16 0%,#0d3320 20%,#134e2e 42%,#1a5c38 60%,#0c3321 80%,#051f14 100%)",
+   dark:true},
+];
+
+// cal=kcal per gram, p/c/f=g per 100g, n=English name, na=Arabic name, cat=EN cat, cata=AR cat
+// portions: l=English label, la=Arabic label, g=grams
+const foods=[
+  // Fruits / فواكه
+  {n:"Apple",na:"تفاحة",cat:"Fruit",cata:"فاكهة",e:"🍎",cal:0.52,p:0.3,c:14,f:0.2,portions:[{l:"Small (150g)",la:"صغيرة (150غ)",g:150},{l:"Medium (182g)",la:"متوسطة (182غ)",g:182},{l:"Large (223g)",la:"كبيرة (223غ)",g:223},{l:"Sliced cup (109g)",la:"كوب شرائح (109غ)",g:109}]},
+  {n:"Banana",na:"موزة",cat:"Fruit",cata:"فاكهة",e:"🍌",cal:0.89,p:1.1,c:23,f:0.3,portions:[{l:"Small (81g)",la:"صغيرة (81غ)",g:81},{l:"Medium (118g)",la:"متوسطة (118غ)",g:118},{l:"Large (136g)",la:"كبيرة (136غ)",g:136},{l:"Extra large (152g)",la:"كبيرة جداً (152غ)",g:152}]},
+  {n:"Orange",na:"برتقالة",cat:"Fruit",cata:"فاكهة",e:"🍊",cal:0.47,p:0.9,c:12,f:0.1,portions:[{l:"Small (96g)",la:"صغيرة (96غ)",g:96},{l:"Medium (131g)",la:"متوسطة (131غ)",g:131},{l:"Large (184g)",la:"كبيرة (184غ)",g:184}]},
+  {n:"Strawberry",na:"فراولة",cat:"Fruit",cata:"فاكهة",e:"🍓",cal:0.32,p:0.7,c:7.7,f:0.3,portions:[{l:"1 berry (12g)",la:"حبة واحدة (12غ)",g:12},{l:"5 berries (60g)",la:"5 حبات (60غ)",g:60},{l:"1 cup (152g)",la:"كوب (152غ)",g:152}]},
+  {n:"Grapes",na:"عنب",cat:"Fruit",cata:"فاكهة",e:"🍇",cal:0.69,p:0.7,c:18,f:0.2,portions:[{l:"10 grapes (50g)",la:"10 حبات (50غ)",g:50},{l:"1 cup (92g)",la:"كوب (92غ)",g:92},{l:"Small bunch (150g)",la:"عنقود صغير (150غ)",g:150}]},
+  {n:"Watermelon",na:"بطيخ",cat:"Fruit",cata:"فاكهة",e:"🍉",cal:0.30,p:0.6,c:7.6,f:0.2,portions:[{l:"1 cup diced (154g)",la:"كوب مقطّع (154غ)",g:154},{l:"1 slice (286g)",la:"شريحة (286غ)",g:286}]},
+  {n:"Mango",na:"مانجو",cat:"Fruit",cata:"فاكهة",e:"🥭",cal:0.60,p:0.8,c:15,f:0.4,portions:[{l:"Half (100g)",la:"نصف (100غ)",g:100},{l:"1 cup sliced (165g)",la:"كوب شرائح (165غ)",g:165},{l:"Whole (207g)",la:"كاملة (207غ)",g:207}]},
+  {n:"Avocado",na:"أفوكادو",cat:"Fruit",cata:"فاكهة",e:"🥑",cal:1.60,p:2.0,c:9,f:15,portions:[{l:"2 tbsp (30g)",la:"ملعقتان (30غ)",g:30},{l:"Half (68g)",la:"نصف (68غ)",g:68},{l:"Whole (136g)",la:"كاملة (136غ)",g:136}]},
+  {n:"Pear",na:"إجاصة",cat:"Fruit",cata:"فاكهة",e:"🍐",cal:0.57,p:0.4,c:15,f:0.1,portions:[{l:"Small (148g)",la:"صغيرة (148غ)",g:148},{l:"Medium (178g)",la:"متوسطة (178غ)",g:178},{l:"Large (230g)",la:"كبيرة (230غ)",g:230}]},
+  {n:"Peach",na:"خوخ",cat:"Fruit",cata:"فاكهة",e:"🍑",cal:0.39,p:0.9,c:10,f:0.3,portions:[{l:"Small (130g)",la:"صغيرة (130غ)",g:130},{l:"Medium (150g)",la:"متوسطة (150غ)",g:150},{l:"Large (175g)",la:"كبيرة (175غ)",g:175}]},
+  {n:"Pineapple",na:"أناناس",cat:"Fruit",cata:"فاكهة",e:"🍍",cal:0.50,p:0.5,c:13,f:0.1,portions:[{l:"1 slice (84g)",la:"شريحة (84غ)",g:84},{l:"1 cup chunks (165g)",la:"كوب قطع (165غ)",g:165}]},
+  {n:"Blueberry",na:"توت أزرق",cat:"Fruit",cata:"فاكهة",e:"🫐",cal:0.57,p:0.7,c:14,f:0.3,portions:[{l:"10 berries (14g)",la:"10 حبات (14غ)",g:14},{l:"1/4 cup (36g)",la:"ربع كوب (36غ)",g:36},{l:"1 cup (148g)",la:"كوب (148غ)",g:148}]},
+  {n:"Kiwi",na:"كيوي",cat:"Fruit",cata:"فاكهة",e:"🥝",cal:0.61,p:1.1,c:15,f:0.5,portions:[{l:"1 kiwi (69g)",la:"حبة كيوي (69غ)",g:69},{l:"2 kiwis (138g)",la:"حبتان (138غ)",g:138}]},
+  {n:"Cherries",na:"كرز",cat:"Fruit",cata:"فاكهة",e:"🍒",cal:0.63,p:1.1,c:16,f:0.2,portions:[{l:"5 cherries (40g)",la:"5 حبات (40غ)",g:40},{l:"10 cherries (80g)",la:"10 حبات (80غ)",g:80},{l:"1 cup (138g)",la:"كوب (138غ)",g:138}]},
+  {n:"Lemon",na:"ليمون",cat:"Fruit",cata:"فاكهة",e:"🍋",cal:0.29,p:1.1,c:9,f:0.3,portions:[{l:"Wedge (7g)",la:"وتد (7غ)",g:7},{l:"Half (42g)",la:"نصف (42غ)",g:42},{l:"Whole (84g)",la:"كامل (84غ)",g:84}]},
+  // Vegetables / خضروات
+  {n:"Broccoli",na:"بروكلي",cat:"Vegetable",cata:"خضروات",e:"🥦",cal:0.34,p:2.8,c:7,f:0.4,portions:[{l:"1 floret (11g)",la:"زهرة واحدة (11غ)",g:11},{l:"1/2 cup (44g)",la:"نصف كوب (44غ)",g:44},{l:"1 cup (88g)",la:"كوب (88غ)",g:88},{l:"Medium head (608g)",la:"رأس متوسط (608غ)",g:608}]},
+  {n:"Carrot",na:"جزرة",cat:"Vegetable",cata:"خضروات",e:"🥕",cal:0.41,p:0.9,c:10,f:0.2,portions:[{l:"Baby carrot (10g)",la:"جزر صغير (10غ)",g:10},{l:"Medium (61g)",la:"متوسطة (61غ)",g:61},{l:"Large (72g)",la:"كبيرة (72غ)",g:72},{l:"1 cup chopped (122g)",la:"كوب مفروم (122غ)",g:122}]},
+  {n:"Spinach",na:"سبانخ",cat:"Vegetable",cata:"خضروات",e:"🥬",cal:0.23,p:2.9,c:3.6,f:0.4,portions:[{l:"1 cup raw (30g)",la:"كوب نيء (30غ)",g:30},{l:"2 cups raw (60g)",la:"كوبان نيء (60غ)",g:60},{l:"1/2 cup cooked (90g)",la:"نصف كوب مطبوخ (90غ)",g:90}]},
+  {n:"Potato (boiled)",na:"بطاطا مسلوقة",cat:"Vegetable",cata:"خضروات",e:"🥔",cal:0.87,p:1.9,c:20,f:0.1,portions:[{l:"Small (148g)",la:"صغيرة (148غ)",g:148},{l:"Medium (213g)",la:"متوسطة (213غ)",g:213},{l:"Large (299g)",la:"كبيرة (299غ)",g:299}]},
+  {n:"Sweet potato (baked)",na:"بطاطا حلوة مشوية",cat:"Vegetable",cata:"خضروات",e:"🍠",cal:0.86,p:1.6,c:20,f:0.1,portions:[{l:"Small (130g)",la:"صغيرة (130غ)",g:130},{l:"Medium (150g)",la:"متوسطة (150غ)",g:150},{l:"Large (180g)",la:"كبيرة (180غ)",g:180}]},
+  {n:"Tomato",na:"طماطم",cat:"Vegetable",cata:"خضروات",e:"🍅",cal:0.18,p:0.9,c:3.9,f:0.2,portions:[{l:"Cherry tomato (17g)",la:"طماطم كرزية (17غ)",g:17},{l:"Small (91g)",la:"صغيرة (91غ)",g:91},{l:"Medium (123g)",la:"متوسطة (123غ)",g:123},{l:"Large (182g)",la:"كبيرة (182غ)",g:182}]},
+  {n:"Cucumber",na:"خيارة",cat:"Vegetable",cata:"خضروات",e:"🥒",cal:0.15,p:0.7,c:3.6,f:0.1,portions:[{l:"4 slices (28g)",la:"4 شرائح (28غ)",g:28},{l:"Half (150g)",la:"نصف (150غ)",g:150},{l:"Whole (300g)",la:"كاملة (300غ)",g:300}]},
+  {n:"Onion",na:"بصلة",cat:"Vegetable",cata:"خضروات",e:"🧅",cal:0.40,p:1.1,c:9.3,f:0.1,portions:[{l:"1 tbsp chopped (10g)",la:"ملعقة مفرومة (10غ)",g:10},{l:"Small (110g)",la:"صغيرة (110غ)",g:110},{l:"Medium (148g)",la:"متوسطة (148غ)",g:148},{l:"Large (227g)",la:"كبيرة (227غ)",g:227}]},
+  {n:"Garlic",na:"ثوم",cat:"Vegetable",cata:"خضروات",e:"🧄",cal:1.49,p:6.4,c:33,f:0.5,portions:[{l:"1 clove (3g)",la:"فص واحد (3غ)",g:3},{l:"1 tsp minced (5g)",la:"ملعقة صغيرة مفرومة (5غ)",g:5},{l:"1 tbsp minced (15g)",la:"ملعقة كبيرة مفرومة (15غ)",g:15}]},
+  {n:"Bell pepper",na:"فلفل رومي",cat:"Vegetable",cata:"خضروات",e:"🫑",cal:0.31,p:1.0,c:7,f:0.3,portions:[{l:"1 ring (10g)",la:"حلقة (10غ)",g:10},{l:"Half pepper (75g)",la:"نصف حبة (75غ)",g:75},{l:"Whole (150g)",la:"حبة كاملة (150غ)",g:150}]},
+  {n:"Corn (cooked)",na:"ذرة مطبوخة",cat:"Vegetable",cata:"خضروات",e:"🌽",cal:0.96,p:3.4,c:21,f:1.5,portions:[{l:"Half cob (77g)",la:"نصف كوز (77غ)",g:77},{l:"1 cob (154g)",la:"كوز كامل (154غ)",g:154},{l:"1 cup kernels (154g)",la:"كوب حبوب (154غ)",g:154}]},
+  {n:"Lettuce (romaine)",na:"خس روماني",cat:"Vegetable",cata:"خضروات",e:"🥗",cal:0.17,p:1.2,c:3.3,f:0.3,portions:[{l:"1 leaf (10g)",la:"ورقة (10غ)",g:10},{l:"1 cup shredded (47g)",la:"كوب مقطّع (47غ)",g:47},{l:"2 cups (94g)",la:"كوبان (94غ)",g:94}]},
+  {n:"Mushroom",na:"فطر",cat:"Vegetable",cata:"خضروات",e:"🍄",cal:0.22,p:3.1,c:3.3,f:0.3,portions:[{l:"1 mushroom (18g)",la:"فطرة واحدة (18غ)",g:18},{l:"1/2 cup sliced (35g)",la:"نصف كوب شرائح (35غ)",g:35},{l:"1 cup sliced (70g)",la:"كوب شرائح (70غ)",g:70}]},
+  {n:"Zucchini",na:"كوسا",cat:"Vegetable",cata:"خضروات",e:"🥒",cal:0.17,p:1.2,c:3.1,f:0.3,portions:[{l:"1/2 cup sliced (65g)",la:"نصف كوب شرائح (65غ)",g:65},{l:"Medium (196g)",la:"متوسطة (196غ)",g:196}]},
+  {n:"Eggplant",na:"باذنجان",cat:"Vegetable",cata:"خضروات",e:"🍆",cal:0.25,p:1.0,c:6,f:0.2,portions:[{l:"1/2 cup cubed (41g)",la:"نصف كوب مكعبات (41غ)",g:41},{l:"1 cup cubed (82g)",la:"كوب مكعبات (82غ)",g:82},{l:"Whole (458g)",la:"كامل (458غ)",g:458}]},
+  // Grains / حبوب
+  {n:"White bread",na:"خبز أبيض",cat:"Grain",cata:"حبوب",e:"🍞",cal:2.65,p:9,c:49,f:3.2,portions:[{l:"Thin slice (20g)",la:"شريحة رفيعة (20غ)",g:20},{l:"Regular slice (28g)",la:"شريحة عادية (28غ)",g:28},{l:"Thick slice (38g)",la:"شريحة سميكة (38غ)",g:38}]},
+  {n:"Whole wheat bread",na:"خبز قمح كامل",cat:"Grain",cata:"حبوب",e:"🍞",cal:2.47,p:13,c:41,f:3.4,portions:[{l:"Thin slice (20g)",la:"شريحة رفيعة (20غ)",g:20},{l:"Regular slice (28g)",la:"شريحة عادية (28غ)",g:28},{l:"Thick slice (38g)",la:"شريحة سميكة (38غ)",g:38}]},
+  {n:"White rice (cooked)",na:"أرز أبيض مطبوخ",cat:"Grain",cata:"حبوب",e:"🍚",cal:1.30,p:2.7,c:28,f:0.3,portions:[{l:"1/4 cup (50g)",la:"ربع كوب (50غ)",g:50},{l:"1/2 cup (90g)",la:"نصف كوب (90غ)",g:90},{l:"3/4 cup (130g)",la:"ثلاثة أرباع كوب (130غ)",g:130},{l:"1 cup (186g)",la:"كوب (186غ)",g:186}]},
+  {n:"Brown rice (cooked)",na:"أرز بني مطبوخ",cat:"Grain",cata:"حبوب",e:"🍚",cal:1.11,p:2.6,c:23,f:0.9,portions:[{l:"1/2 cup (97g)",la:"نصف كوب (97غ)",g:97},{l:"1 cup (195g)",la:"كوب (195غ)",g:195}]},
+  {n:"Pasta (cooked)",na:"مكرونة مطبوخة",cat:"Grain",cata:"حبوب",e:"🍝",cal:1.31,p:5,c:25,f:1.1,portions:[{l:"1/2 cup (70g)",la:"نصف كوب (70غ)",g:70},{l:"1 cup (140g)",la:"كوب (140غ)",g:140},{l:"1.5 cups (210g)",la:"كوب ونصف (210غ)",g:210},{l:"2 cups (280g)",la:"كوبان (280غ)",g:280}]},
+  {n:"Oats (dry)",na:"شوفان جاف",cat:"Grain",cata:"حبوب",e:"🥣",cal:3.89,p:17,c:66,f:7,portions:[{l:"1/4 cup (20g)",la:"ربع كوب (20غ)",g:20},{l:"1/2 cup (40g)",la:"نصف كوب (40غ)",g:40},{l:"3/4 cup (60g)",la:"ثلاثة أرباع كوب (60غ)",g:60},{l:"1 cup (81g)",la:"كوب (81غ)",g:81}]},
+  {n:"Tortilla (flour)",na:"خبز التورتيلا",cat:"Grain",cata:"حبوب",e:"🫓",cal:3.06,p:8,c:49,f:7,portions:[{l:"Small 6in (35g)",la:"صغير 15سم (35غ)",g:35},{l:"Medium 8in (45g)",la:"متوسط 20سم (45غ)",g:45},{l:"Large 10in (72g)",la:"كبير 25سم (72غ)",g:72}]},
+  {n:"Pita bread",na:"خبز بيتا",cat:"Grain",cata:"حبوب",e:"🫓",cal:2.75,p:9,c:55,f:1.2,portions:[{l:"Small (28g)",la:"صغير (28غ)",g:28},{l:"Medium (60g)",la:"متوسط (60غ)",g:60},{l:"Large (80g)",la:"كبير (80غ)",g:80}]},
+  {n:"Quinoa (cooked)",na:"كينوا مطبوخة",cat:"Grain",cata:"حبوب",e:"🌾",cal:1.20,p:4.4,c:21,f:1.9,portions:[{l:"1/2 cup (92g)",la:"نصف كوب (92غ)",g:92},{l:"1 cup (185g)",la:"كوب (185غ)",g:185}]},
+  {n:"Bagel",na:"بيغل",cat:"Grain",cata:"حبوب",e:"🥯",cal:2.57,p:10,c:52,f:1.6,portions:[{l:"Mini (50g)",la:"صغير (50غ)",g:50},{l:"Small (70g)",la:"أصغر قياسي (70غ)",g:70},{l:"Regular (105g)",la:"قياسي (105غ)",g:105},{l:"Large (130g)",la:"كبير (130غ)",g:130}]},
+  {n:"Croissant",na:"كرواسون",cat:"Grain",cata:"حبوب",e:"🥐",cal:4.06,p:8.2,c:45,f:21,portions:[{l:"Mini (35g)",la:"صغير (35غ)",g:35},{l:"Regular (57g)",la:"قياسي (57غ)",g:57},{l:"Large (80g)",la:"كبير (80غ)",g:80}]},
+  {n:"Cornflakes",na:"كورن فليكس",cat:"Grain",cata:"حبوب",e:"🥣",cal:3.57,p:7,c:84,f:0.4,portions:[{l:"1/2 cup (15g)",la:"نصف كوب (15غ)",g:15},{l:"1 cup (28g)",la:"كوب (28غ)",g:28},{l:"1.5 cups (42g)",la:"كوب ونصف (42غ)",g:42}]},
+  // Protein / بروتين
+  {n:"Chicken breast (cooked)",na:"صدر دجاج مطبوخ",cat:"Protein",cata:"بروتين",e:"🍗",cal:1.65,p:31,c:0,f:3.6,portions:[{l:"1 oz (28g)",la:"أونصة (28غ)",g:28},{l:"Small breast (120g)",la:"صدر صغير (120غ)",g:120},{l:"Medium breast (174g)",la:"صدر متوسط (174غ)",g:174},{l:"Large breast (220g)",la:"صدر كبير (220غ)",g:220}]},
+  {n:"Chicken thigh (cooked)",na:"فخذ دجاج مطبوخ",cat:"Protein",cata:"بروتين",e:"🍗",cal:2.09,p:26,c:0,f:11,portions:[{l:"Small thigh (52g)",la:"فخذ صغير (52غ)",g:52},{l:"Medium thigh (82g)",la:"فخذ متوسط (82غ)",g:82},{l:"Large thigh (120g)",la:"فخذ كبير (120غ)",g:120}]},
+  {n:"Beef (ground, cooked)",na:"لحم بقري مفروم مطبوخ",cat:"Protein",cata:"بروتين",e:"🥩",cal:2.54,p:26,c:0,f:15,portions:[{l:"1 oz (28g)",la:"أونصة (28غ)",g:28},{l:"1/4 lb patty (113g)",la:"برجر ربع رطل (113غ)",g:113},{l:"1/2 lb patty (227g)",la:"برجر نصف رطل (227غ)",g:227}]},
+  {n:"Beef steak (sirloin)",na:"ستيك لحم بقري",cat:"Protein",cata:"بروتين",e:"🥩",cal:2.07,p:30,c:0,f:9,portions:[{l:"3 oz (85g)",la:"3 أونصة (85غ)",g:85},{l:"6 oz (170g)",la:"6 أونصة (170غ)",g:170},{l:"8 oz (227g)",la:"8 أونصة (227غ)",g:227}]},
+  {n:"Salmon (cooked)",na:"سلمون مطبوخ",cat:"Protein",cata:"بروتين",e:"🐟",cal:2.08,p:25,c:0,f:12,portions:[{l:"3 oz (85g)",la:"3 أونصة (85غ)",g:85},{l:"4 oz (113g)",la:"4 أونصة (113غ)",g:113},{l:"6 oz fillet (170g)",la:"فيليه 6 أونصة (170غ)",g:170},{l:"8 oz fillet (227g)",la:"فيليه 8 أونصة (227غ)",g:227}]},
+  {n:"Tuna (canned in water)",na:"تونة معلبة بالماء",cat:"Protein",cata:"بروتين",e:"🐟",cal:1.16,p:26,c:0,f:0.8,portions:[{l:"2 tbsp (28g)",la:"ملعقتان كبيرتان (28غ)",g:28},{l:"Half can (85g)",la:"نصف علبة (85غ)",g:85},{l:"Full can (170g)",la:"علبة كاملة (170غ)",g:170}]},
+  {n:"Shrimp (cooked)",na:"روبيان مطبوخ",cat:"Protein",cata:"بروتين",e:"🦐",cal:0.99,p:20,c:0.9,f:0.5,portions:[{l:"4 large (28g)",la:"4 حبات كبيرة (28غ)",g:28},{l:"8 large (56g)",la:"8 حبات كبيرة (56غ)",g:56},{l:"3 oz (85g)",la:"3 أونصة (85غ)",g:85}]},
+  {n:"Egg (whole, large)",na:"بيضة كاملة كبيرة",cat:"Protein",cata:"بروتين",e:"🥚",cal:1.43,p:12.6,c:0.7,f:9.9,portions:[{l:"Small (38g)",la:"صغيرة (38غ)",g:38},{l:"Medium (44g)",la:"متوسطة (44غ)",g:44},{l:"Large (50g)",la:"كبيرة (50غ)",g:50},{l:"Extra large (56g)",la:"كبيرة جداً (56غ)",g:56},{l:"2 large (100g)",la:"بيضتان (100غ)",g:100},{l:"3 large (150g)",la:"3 بيضات (150غ)",g:150}]},
+  {n:"Egg white",na:"بياض بيض",cat:"Protein",cata:"بروتين",e:"🥚",cal:0.52,p:10.9,c:0.7,f:0.2,portions:[{l:"1 white (33g)",la:"بياض بيضة (33غ)",g:33},{l:"2 whites (66g)",la:"بياض بيضتين (66غ)",g:66},{l:"3 whites (99g)",la:"بياض 3 بيضات (99غ)",g:99}]},
+  {n:"Turkey breast (cooked)",na:"صدر ديك رومي مطبوخ",cat:"Protein",cata:"بروتين",e:"🦃",cal:1.35,p:29,c:0,f:1,portions:[{l:"2 slices deli (42g)",la:"شريحتان (42غ)",g:42},{l:"3 oz (85g)",la:"3 أونصة (85غ)",g:85},{l:"6 oz (170g)",la:"6 أونصة (170غ)",g:170}]},
+  {n:"Lamb chop (cooked)",na:"ضلع لحم خروف مطبوخ",cat:"Protein",cata:"بروتين",e:"🥩",cal:2.95,p:24,c:0,f:20,portions:[{l:"Small chop (80g)",la:"ضلع صغير (80غ)",g:80},{l:"Medium chop (120g)",la:"ضلع متوسط (120غ)",g:120},{l:"Large chop (160g)",la:"ضلع كبير (160غ)",g:160}]},
+  // Dairy / ألبان
+  {n:"Milk (whole)",na:"حليب كامل الدسم",cat:"Dairy",cata:"ألبان",e:"🥛",cal:0.61,p:3.2,c:4.8,f:3.3,portions:[{l:"1 tbsp (15ml)",la:"ملعقة كبيرة (15مل)",g:15},{l:"1/4 cup (60ml)",la:"ربع كوب (60مل)",g:60},{l:"1/2 cup (120ml)",la:"نصف كوب (120مل)",g:120},{l:"1 cup (240ml)",la:"كوب (240مل)",g:240}]},
+  {n:"Milk (skim)",na:"حليب خالي الدسم",cat:"Dairy",cata:"ألبان",e:"🥛",cal:0.34,p:3.4,c:5,f:0.1,portions:[{l:"1/2 cup (120ml)",la:"نصف كوب (120مل)",g:120},{l:"1 cup (240ml)",la:"كوب (240مل)",g:240}]},
+  {n:"Yogurt (plain, full fat)",na:"زبادي كامل الدسم",cat:"Dairy",cata:"ألبان",e:"🍶",cal:0.59,p:3.5,c:4.7,f:3.3,portions:[{l:"Small (113g)",la:"صغير (113غ)",g:113},{l:"Standard (170g)",la:"قياسي (170غ)",g:170},{l:"Large (227g)",la:"كبير (227غ)",g:227}]},
+  {n:"Greek yogurt (plain)",na:"زبادي يوناني",cat:"Dairy",cata:"ألبان",e:"🍶",cal:0.59,p:10,c:3.6,f:0.4,portions:[{l:"Small (113g)",la:"صغير (113غ)",g:113},{l:"Standard (150g)",la:"قياسي (150غ)",g:150},{l:"Large (227g)",la:"كبير (227غ)",g:227}]},
+  {n:"Cheddar cheese",na:"جبن شيدر",cat:"Dairy",cata:"ألبان",e:"🧀",cal:4.03,p:25,c:1.3,f:33,portions:[{l:"1 thin slice (17g)",la:"شريحة رفيعة (17غ)",g:17},{l:"1 oz (28g)",la:"أونصة (28غ)",g:28},{l:"1/2 cup shredded (56g)",la:"نصف كوب مبشور (56غ)",g:56}]},
+  {n:"Mozzarella cheese",na:"جبن موزاريلا",cat:"Dairy",cata:"ألبان",e:"🧀",cal:2.80,p:22,c:2.2,f:17,portions:[{l:"1 slice (28g)",la:"شريحة (28غ)",g:28},{l:"1/2 cup shredded (56g)",la:"نصف كوب مبشور (56غ)",g:56},{l:"Fresh ball (125g)",la:"كرة طازجة (125غ)",g:125}]},
+  {n:"Butter",na:"زبدة",cat:"Dairy",cata:"ألبان",e:"🧈",cal:7.17,p:0.9,c:0.1,f:81,portions:[{l:"1 tsp (5g)",la:"ملعقة صغيرة (5غ)",g:5},{l:"1 tbsp (14g)",la:"ملعقة كبيرة (14غ)",g:14},{l:"2 tbsp (28g)",la:"ملعقتان كبيرتان (28غ)",g:28}]},
+  {n:"Cream cheese",na:"جبن كريمي",cat:"Dairy",cata:"ألبان",e:"🧀",cal:3.42,p:6,c:4,f:34,portions:[{l:"1 tbsp (14g)",la:"ملعقة كبيرة (14غ)",g:14},{l:"2 tbsp (28g)",la:"ملعقتان كبيرتان (28غ)",g:28},{l:"1/4 cup (56g)",la:"ربع كوب (56غ)",g:56}]},
+  {n:"Ice cream (vanilla)",na:"آيس كريم فانيلا",cat:"Dairy",cata:"ألبان",e:"🍨",cal:2.07,p:3.5,c:24,f:11,portions:[{l:"1 scoop (66g)",la:"كرة واحدة (66غ)",g:66},{l:"1 cup (132g)",la:"كوب (132غ)",g:132},{l:"3 scoops (198g)",la:"ثلاث كرات (198غ)",g:198}]},
+  // Fats & Nuts / دهون ومكسرات
+  {n:"Olive oil",na:"زيت زيتون",cat:"Fat",cata:"دهون",e:"🫙",cal:8.84,p:0,c:0,f:100,portions:[{l:"1 tsp (4g)",la:"ملعقة صغيرة (4غ)",g:4},{l:"1 tbsp (13.5g)",la:"ملعقة كبيرة (13.5غ)",g:13.5},{l:"2 tbsp (27g)",la:"ملعقتان كبيرتان (27غ)",g:27}]},
+  {n:"Coconut oil",na:"زيت جوز الهند",cat:"Fat",cata:"دهون",e:"🫙",cal:8.62,p:0,c:0,f:100,portions:[{l:"1 tsp (4g)",la:"ملعقة صغيرة (4غ)",g:4},{l:"1 tbsp (13g)",la:"ملعقة كبيرة (13غ)",g:13}]},
+  {n:"Almonds",na:"لوز",cat:"Nut",cata:"مكسرات",e:"🌰",cal:5.79,p:21,c:22,f:50,portions:[{l:"5 almonds (7g)",la:"5 حبات (7غ)",g:7},{l:"10 almonds (14g)",la:"10 حبات (14غ)",g:14},{l:"1 oz (28g)",la:"أونصة (28غ)",g:28},{l:"1/4 cup (35g)",la:"ربع كوب (35غ)",g:35}]},
+  {n:"Walnuts",na:"جوز",cat:"Nut",cata:"مكسرات",e:"🌰",cal:6.54,p:15,c:14,f:65,portions:[{l:"2 halves (7g)",la:"نصفان (7غ)",g:7},{l:"1 oz (28g)",la:"أونصة (28غ)",g:28}]},
+  {n:"Peanut butter",na:"زبدة الفول السوداني",cat:"Nut",cata:"مكسرات",e:"🥜",cal:5.88,p:25,c:20,f:50,portions:[{l:"1 tsp (5g)",la:"ملعقة صغيرة (5غ)",g:5},{l:"1 tbsp (16g)",la:"ملعقة كبيرة (16غ)",g:16},{l:"2 tbsp (32g)",la:"ملعقتان كبيرتان (32غ)",g:32}]},
+  {n:"Cashews",na:"كاجو",cat:"Nut",cata:"مكسرات",e:"🌰",cal:5.53,p:18,c:30,f:44,portions:[{l:"10 cashews (16g)",la:"10 حبات (16غ)",g:16},{l:"1 oz (28g)",la:"أونصة (28غ)",g:28},{l:"1/4 cup (32g)",la:"ربع كوب (32غ)",g:32}]},
+  {n:"Sunflower seeds",na:"بذور عباد الشمس",cat:"Nut",cata:"مكسرات",e:"🌻",cal:5.84,p:21,c:20,f:51,portions:[{l:"1 tbsp (9g)",la:"ملعقة كبيرة (9غ)",g:9},{l:"1 oz (28g)",la:"أونصة (28غ)",g:28}]},
+  // Legumes
+  {n:"Lentils (cooked)",na:"عدس مطبوخ",cat:"Legume",cata:"بقوليات",e:"🫘",cal:1.16,p:9,c:20,f:0.4,portions:[{l:"1/2 cup (99g)",la:"نصف كوب (99غ)",g:99},{l:"1 cup (198g)",la:"كوب (198غ)",g:198}]},
+  {n:"Chickpeas (cooked)",na:"حمص مطبوخ",cat:"Legume",cata:"بقوليات",e:"🫘",cal:1.64,p:8.9,c:27,f:2.6,portions:[{l:"1/2 cup (82g)",la:"نصف كوب (82غ)",g:82},{l:"1 cup (164g)",la:"كوب (164غ)",g:164}]},
+  {n:"Black beans (cooked)",na:"فاصوليا سوداء مطبوخة",cat:"Legume",cata:"بقوليات",e:"🫘",cal:1.32,p:8.9,c:24,f:0.5,portions:[{l:"1/2 cup (86g)",la:"نصف كوب (86غ)",g:86},{l:"1 cup (172g)",la:"كوب (172غ)",g:172}]},
+  {n:"Tofu (firm)",na:"توفو صلب",cat:"Legume",cata:"بقوليات",e:"⬜",cal:0.76,p:8,c:1.9,f:4.2,portions:[{l:"1/4 block (81g)",la:"ربع قالب (81غ)",g:81},{l:"1/2 block (162g)",la:"نصف قالب (162غ)",g:162},{l:"Full block (326g)",la:"قالب كامل (326غ)",g:326}]},
+  {n:"Hummus",na:"حمص بالطحينة",cat:"Legume",cata:"بقوليات",e:"🫘",cal:1.66,p:7.9,c:14,f:9.6,portions:[{l:"1 tbsp (15g)",la:"ملعقة كبيرة (15غ)",g:15},{l:"2 tbsp (30g)",la:"ملعقتان كبيرتان (30غ)",g:30},{l:"1/4 cup (60g)",la:"ربع كوب (60غ)",g:60}]},
+  // Drinks
+  {n:"Orange juice",na:"عصير برتقال",cat:"Drink",cata:"مشروبات",e:"🧃",cal:0.45,p:0.7,c:10,f:0.2,portions:[{l:"1/2 cup (124ml)",la:"نصف كوب (124مل)",g:124},{l:"1 cup (248ml)",la:"كوب (248مل)",g:248},{l:"Large glass (355ml)",la:"كأس كبيرة (355مل)",g:355}]},
+  {n:"Coca-Cola (regular)",na:"كوكاكولا",cat:"Drink",cata:"مشروبات",e:"🥤",cal:0.42,p:0,c:10.6,f:0,portions:[{l:"Small can (222ml)",la:"علبة صغيرة (222مل)",g:222},{l:"Standard can (355ml)",la:"علبة قياسية (355مل)",g:355},{l:"Bottle (500ml)",la:"زجاجة (500مل)",g:500}]},
+  {n:"Coffee (black)",na:"قهوة سوداء",cat:"Drink",cata:"مشروبات",e:"☕",cal:0.01,p:0.3,c:0,f:0,portions:[{l:"Espresso shot (30ml)",la:"شوت إسبريسو (30مل)",g:30},{l:"Small mug (200ml)",la:"كوب صغير (200مل)",g:200},{l:"Large mug (355ml)",la:"كوب كبير (355مل)",g:355}]},
+  {n:"Green tea",na:"شاي أخضر",cat:"Drink",cata:"مشروبات",e:"🍵",cal:0.01,p:0,c:0,f:0,portions:[{l:"Small cup (180ml)",la:"كوب صغير (180مل)",g:180},{l:"Standard cup (237ml)",la:"كوب قياسي (237مل)",g:237}]},
+  {n:"Whole milk latte",na:"لاتيه بالحليب كامل الدسم",cat:"Drink",cata:"مشروبات",e:"☕",cal:0.54,p:3.3,c:6,f:2.7,portions:[{l:"Small 8oz (240ml)",la:"صغير (240مل)",g:240},{l:"Medium 12oz (355ml)",la:"متوسط (355مل)",g:355},{l:"Large 16oz (480ml)",la:"كبير (480مل)",g:480}]},
+  {n:"Apple juice",na:"عصير تفاح",cat:"Drink",cata:"مشروبات",e:"🧃",cal:0.46,p:0.1,c:11,f:0.1,portions:[{l:"1/2 cup (120ml)",la:"نصف كوب (120مل)",g:120},{l:"1 cup (240ml)",la:"كوب (240مل)",g:240}]},
+  // Fast food
+  {n:"Pizza (cheese, regular crust)",na:"بيتزا بالجبن",cat:"Fast Food",cata:"وجبات سريعة",e:"🍕",cal:2.66,p:11,c:33,f:10,portions:[{l:"Small slice (63g)",la:"شريحة صغيرة (63غ)",g:63},{l:"Medium slice (80g)",la:"شريحة متوسطة (80غ)",g:80},{l:"Large slice (107g)",la:"شريحة كبيرة (107غ)",g:107}]},
+  {n:"Burger (beef patty only)",na:"برجر لحم بقري",cat:"Fast Food",cata:"وجبات سريعة",e:"🍔",cal:2.95,p:17,c:0,f:20,portions:[{l:"Small patty (45g)",la:"قرص صغير (45غ)",g:45},{l:"Quarter-pounder (113g)",la:"ربع رطل (113غ)",g:113},{l:"Half-pounder (227g)",la:"نصف رطل (227غ)",g:227}]},
+  {n:"French fries",na:"بطاطس مقلية",cat:"Fast Food",cata:"وجبات سريعة",e:"🍟",cal:3.12,p:3.4,c:41,f:15,portions:[{l:"Small (71g)",la:"صغير (71غ)",g:71},{l:"Medium (117g)",la:"متوسط (117غ)",g:117},{l:"Large (154g)",la:"كبير (154غ)",g:154}]},
+  {n:"Hot dog (bun included)",na:"هوت دوج",cat:"Fast Food",cata:"وجبات سريعة",e:"🌭",cal:2.50,p:10,c:18,f:15,portions:[{l:"Regular (130g)",la:"قياسي (130غ)",g:130},{l:"Large (170g)",la:"كبير (170غ)",g:170}]},
+  // Sweets & Snacks
+  {n:"Dark chocolate (70%)",na:"شوكولاتة داكنة 70%",cat:"Sweet",cata:"حلويات",e:"🍫",cal:5.98,p:7.8,c:46,f:43,portions:[{l:"1 square (10g)",la:"مربع واحد (10غ)",g:10},{l:"2 squares (20g)",la:"مربعان (20غ)",g:20},{l:"Half bar (42g)",la:"نصف لوح (42غ)",g:42},{l:"Full bar (85g)",la:"لوح كامل (85غ)",g:85}]},
+  {n:"Milk chocolate",na:"شوكولاتة بالحليب",cat:"Sweet",cata:"حلويات",e:"🍫",cal:5.35,p:7.7,c:59,f:30,portions:[{l:"1 square (8g)",la:"مربع واحد (8غ)",g:8},{l:"Small bar (40g)",la:"لوح صغير (40غ)",g:40},{l:"Full bar (100g)",la:"لوح كامل (100غ)",g:100}]},
+  {n:"Honey",na:"عسل",cat:"Sweet",cata:"حلويات",e:"🍯",cal:3.04,p:0.3,c:82,f:0,portions:[{l:"1 tsp (7g)",la:"ملعقة صغيرة (7غ)",g:7},{l:"1 tbsp (21g)",la:"ملعقة كبيرة (21غ)",g:21},{l:"2 tbsp (42g)",la:"ملعقتان كبيرتان (42غ)",g:42}]},
+  {n:"White sugar",na:"سكر أبيض",cat:"Sweet",cata:"حلويات",e:"🍬",cal:3.87,p:0,c:100,f:0,portions:[{l:"1 tsp (4g)",la:"ملعقة صغيرة (4غ)",g:4},{l:"1 tbsp (12g)",la:"ملعقة كبيرة (12غ)",g:12},{l:"1/4 cup (50g)",la:"ربع كوب (50غ)",g:50}]},
+  {n:"Potato chips",na:"شيبس",cat:"Snack",cata:"وجبات خفيفة",e:"🥔",cal:5.36,p:6.6,c:53,f:35,portions:[{l:"Small pack (28g)",la:"كيس صغير (28غ)",g:28},{l:"Medium pack (42g)",la:"كيس متوسط (42غ)",g:42},{l:"Large pack (57g)",la:"كيس كبير (57غ)",g:57}]},
+  {n:"Popcorn (plain)",na:"فشار سادة",cat:"Snack",cata:"وجبات خفيفة",e:"🍿",cal:3.87,p:13,c:78,f:4.5,portions:[{l:"1 cup (8g)",la:"كوب (8غ)",g:8},{l:"2 cups (16g)",la:"كوبان (16غ)",g:16},{l:"Movie small (100g)",la:"سينما صغير (100غ)",g:100},{l:"Movie large (200g)",la:"سينما كبير (200غ)",g:200}]},
+  {n:"Crackers (saltine)",na:"بسكويت مالح",cat:"Snack",cata:"وجبات خفيفة",e:"🍘",cal:4.18,p:8.8,c:74,f:9,portions:[{l:"2 crackers (11g)",la:"قطعتان (11غ)",g:11},{l:"5 crackers (28g)",la:"5 قطع (28غ)",g:28},{l:"10 crackers (56g)",la:"10 قطع (56غ)",g:56}]},
+  {n:"Ketchup",na:"كاتشب",cat:"Condiment",cata:"إضافات",e:"🍅",cal:1.12,p:1.3,c:27,f:0.1,portions:[{l:"1 tsp (5g)",la:"ملعقة صغيرة (5غ)",g:5},{l:"1 tbsp (15g)",la:"ملعقة كبيرة (15غ)",g:15},{l:"2 tbsp (30g)",la:"ملعقتان كبيرتان (30غ)",g:30}]},
+  {n:"Mayonnaise",na:"مايونيز",cat:"Condiment",cata:"إضافات",e:"🫙",cal:6.80,p:1.1,c:0.6,f:75,portions:[{l:"1 tsp (4g)",la:"ملعقة صغيرة (4غ)",g:4},{l:"1 tbsp (14g)",la:"ملعقة كبيرة (14غ)",g:14},{l:"2 tbsp (28g)",la:"ملعقتان كبيرتان (28غ)",g:28}]},
+  {n:"Soy sauce",na:"صلصة الصويا",cat:"Condiment",cata:"إضافات",e:"🫙",cal:0.53,p:8,c:4.9,f:0.1,portions:[{l:"1 tsp (6ml)",la:"ملعقة صغيرة (6مل)",g:6},{l:"1 tbsp (18ml)",la:"ملعقة كبيرة (18مل)",g:18}]},
+];
+
+
+
+let log=[],goal=2000,currentTheme=0,selectedFood=null;
+
+function applyTheme(i){
+  currentTheme=i;
+  const t=themes[i];
+  const r=document.documentElement.style;
+  document.body.style.background=t.bodyBg;
+  document.body.classList.toggle('dark-theme',t.dark);
+  r.setProperty('--accent',t.accent);
+  r.setProperty('--accent-bg',t.bg);
+  r.setProperty('--accent-text',t.text);
+  r.setProperty('--accent-bar',t.bar);
+  r.setProperty('--text','#fff');
+  r.setProperty('--text-muted','rgba(255,255,255,0.60)');
+  r.setProperty('--surface','rgba(255,255,255,0.10)');
+  r.setProperty('--border','rgba(255,255,255,0.15)');
+  r.setProperty('--border-strong','rgba(255,255,255,0.28)');
+  r.setProperty('--bg','rgba(255,255,255,0.08)');
+  // gradient button
+  document.getElementById('addBtn').style.background=t.bar;
+  document.getElementById('addBtn').style.boxShadow='0 2px 16px rgba(0,0,0,0.25)';
+  // consumed accent — use gradient text trick via inline style
+  const consumedEl=document.getElementById('consumed');
+  consumedEl.style.background='none';
+  consumedEl.style.webkitBackgroundClip='unset';
+  consumedEl.style.webkitTextFillColor='unset';
+  consumedEl.style.backgroundClip='unset';
+  consumedEl.style.color=t.accent;
+  const tip=document.getElementById('tipBox');
+  tip.style.borderImage=t.bar+' 1';
+  tip.style.borderLeftWidth='3px';
+  tip.style.borderLeftStyle='solid';
+  tip.style.background='rgba(255,255,255,0.08)';
+  tip.style.color='rgba(255,255,255,0.90)';
+  // theme buttons — highlight active with gradient border
+  document.querySelectorAll('.theme-btn').forEach((b,j)=>{
+    b.classList.toggle('active',j===i);
+    if(j===i){
+      b.style.background='rgba(255,255,255,0.20)';
+      b.style.borderColor='rgba(255,255,255,0.60)';
+      b.style.color='#fff';
+      b.style.fontWeight='600';
+    } else {
+      b.style.background='rgba(255,255,255,0.10)';
+      b.style.borderColor='rgba(255,255,255,0.25)';
+      b.style.color='rgba(255,255,255,0.70)';
+      b.style.fontWeight='400';
+    }
+  });
+  document.querySelectorAll('.portion-chip').forEach(c=>{
+    c.style.borderColor='rgba(255,255,255,0.40)';
+    if(c.classList.contains('selected')){c.style.background=t.accent;c.style.color='#fff';}
+    else{c.style.color='rgba(255,255,255,0.85)';}
+  });
+  updateStats();
+}
+
+function renderThemes(){
+  const el=document.getElementById('themeSelector');
+  themes.forEach((t,i)=>{
+    const b=document.createElement('button');
+    b.className='theme-btn'+(i===0?' active':'');
+    // show gradient preview swatch inside button label
+    b.innerHTML=`<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${t.bar};margin-right:6px;vertical-align:middle;box-shadow:0 0 0 1.5px rgba(255,255,255,0.3)"></span>${t.name}`;
+    b.onclick=()=>applyTheme(i);
+    el.appendChild(b);
+  });
+}
+
+function updateStats(){
+  const total=Math.round(log.reduce((s,i)=>s+i.cal,0));
+  const rem=goal-total;
+  const pct=Math.min(100,Math.round((total/goal)*100));
+  document.getElementById('consumed').textContent=total;
+  document.getElementById('goalDisplay').textContent=goal;
+  document.getElementById('remaining').textContent=Math.max(0,rem);
+  const t=themes[currentTheme];
+  document.getElementById('remaining').style.color=rem<0?'#E24B4A':rem<300?'#BA7517':t.accent;
+  const fill=document.getElementById('barFill');
+  fill.style.width=pct+'%';
+  fill.style.background=pct>=100?'linear-gradient(90deg,#ef4444,#f87171)':pct>=80?'linear-gradient(90deg,#f59e0b,#f97316)':t.bar;
+  const totalP=Math.round(log.reduce((s,i)=>s+(i.grams*(i.food.p/100)),0));
+  const totalC=Math.round(log.reduce((s,i)=>s+(i.grams*(i.food.c/100)),0));
+  const totalF=Math.round(log.reduce((s,i)=>s+(i.grams*(i.food.f/100)),0));
+  document.getElementById('macroP').textContent=totalP+'g';
+  document.getElementById('macroC').textContent=totalC+'g';
+  document.getElementById('macroF').textContent=totalF+'g';
+  const L=i18n[currentLang];
+  if(!log.length){document.getElementById('tipBox').textContent=L.tipDefault;return;}
+  const tip=L.tips.find(x=>total<x.max);
+  const cheer=log.length>=3?' '+L.cheers[Math.floor(Math.random()*L.cheers.length)]:'';
+  document.getElementById('tipBox').textContent=(tip?tip.msg:L.tips[L.tips.length-1].msg)+cheer;
+}
+
+function renderLog(){
+  const el=document.getElementById('logList');
+  if(!log.length){el.innerHTML='<div class="log-empty">'+i18n[currentLang].logEmpty+'</div>';return;}
+  el.innerHTML='';
+  const t=themes[currentTheme];
+  log.forEach((item,idx)=>{
+    const d=document.createElement('div');d.className='log-item';
+    const detail=item.portionLabel?`${item.portionLabel}`:`${item.qty} ${item.unit}`;
+    const isAr=currentLang==='ar';
+    const logName=isAr&&item.food.na?item.food.na:item.food.n;
+    const logCat=isAr&&item.food.cata?item.food.cata:item.food.cat;
+    d.innerHTML=`
+      <div class="log-icon" style="background:${t.bg};color:${t.accent}">${item.food.e}</div>
+      <div style="flex:1;min-width:0">
+        <div class="log-name">${logName}</div>
+        <div class="log-detail">${detail} · ${logCat}</div>
+      </div>
+      <div class="log-cal" style="color:${t.accent}">${Math.round(item.cal)} kcal</div>
+      <button class="del-btn" onclick="removeItem(${idx})" title="Remove">✕</button>`;
+    el.appendChild(d);
+  });
+}
+
+function removeItem(idx){log.splice(idx,1);renderLog();updateStats();}
+
+function showPortionHint(food){
+  if(!food||!food.portions||!food.portions.length){document.getElementById('portionHint').style.display='none';return;}
+  const hint=document.getElementById('portionHint');
+  const chips=document.getElementById('portionChips');
+  const isAr=currentLang==='ar';
+  const foodDisplayName=isAr&&food.na?food.na:food.n;
+  document.getElementById('portionHintTitle').textContent=i18n[currentLang].portionFor+foodDisplayName;
+  chips.innerHTML='';
+  const t=themes[currentTheme];
+  food.portions.forEach(p=>{
+    const c=document.createElement('div');c.className='portion-chip';
+    const chipLabel=isAr&&p.la?p.la:p.l;
+    c.textContent=chipLabel;
+    c.style.borderColor=t.accent;
+    c.style.color=t.text;
+    c._grams=p.g;c._label=chipLabel;
+    c.onclick=()=>{
+      document.querySelectorAll('.portion-chip').forEach(x=>{
+        x.classList.remove('selected');x.style.background='var(--surface)';x.style.color=t.text;
+      });
+      c.classList.add('selected');c.style.background=t.accent;c.style.color='#fff';
+      document.getElementById('qtyInput').value=p.g;
+      document.getElementById('unitSelect').selectedIndex=0;
+      document.getElementById('qtyInput')._portionLabel=chipLabel;
+    };
+    chips.appendChild(c);
+  });
+  hint.style.display='block';
+}
+
+function hidePortionHint(){document.getElementById('portionHint').style.display='none';}
+
+function addFood(){
+  const qty=parseFloat(document.getElementById('qtyInput').value);
+  const unitSel=document.getElementById('unitSelect');
+  const unitMult=parseFloat(unitSel.value);
+  const unitLabel=unitSel.options[unitSel.selectedIndex].text;
+  const typed=document.getElementById('foodInput').value.trim();
+  const typedL=typed.toLowerCase();
+  if(!selectedFood&&typed){
+    selectedFood=foods.find(f=>f.n.toLowerCase()===typedL||(f.na&&f.na===typed))
+      ||foods.find(f=>f.n.toLowerCase().includes(typedL)||(f.na&&f.na.includes(typed)));
+  }
+  if(!selectedFood||isNaN(qty)||qty<=0){
+    const inp=document.getElementById('foodInput');
+    inp.classList.add('error');inp.focus();
+    setTimeout(()=>inp.classList.remove('error'),1400);return;
+  }
+  const grams=qty*unitMult;
+  const portionLabel=document.getElementById('qtyInput')._portionLabel||'';
+  log.push({food:selectedFood,qty,unit:unitLabel,grams,cal:selectedFood.cal*grams,portionLabel});
+  selectedFood=null;
+  document.getElementById('foodInput').value='';
+  document.getElementById('qtyInput').value=100;
+  document.getElementById('qtyInput')._portionLabel='';
+  document.getElementById('suggestions').style.display='none';
+  hidePortionHint();
+  renderLog();updateStats();
+}
+
+function showSuggestions(q){
+  const el=document.getElementById('suggestions');
+  if(!q){el.style.display='none';return;}
+  const ql=q.toLowerCase();
+  const isAr=currentLang==='ar';
+  const matches=foods.filter(f=>
+    f.n.toLowerCase().includes(ql)||(f.na&&f.na.includes(q))
+  ).slice(0,8);
+  if(!matches.length){el.style.display='none';return;}
+  el.innerHTML='';
+  matches.forEach(f=>{
+    const d=document.createElement('div');d.className='sug-item';
+    const displayName=isAr&&f.na?f.na:f.n;
+    const displayCat=isAr&&f.cata?f.cata:f.cat;
+    d.innerHTML=`<div class="sug-left"><span>${f.e}</span><span class="sug-name">${displayName}</span><span class="sug-tag">${displayCat}</span></div><span class="sug-cal">${(f.cal*100).toFixed(0)} kcal/100g</span>`;
+    d.onclick=()=>{
+      selectedFood=f;
+      document.getElementById('foodInput').value=displayName;
+      el.style.display='none';
+      showPortionHint(f);
+    };
+    el.appendChild(d);
+  });
+  el.style.display='block';
+}
+
+const i18n = {
+  en: {
+    appTitle: "Calorie Counter",
+    appSub: "Track what you eat — accurate portions, better results.",
+    consumed: "Consumed",
+    goal: "Goal",
+    remaining: "Remaining",
+    dailyGoal: "Daily goal",
+    setGoal: "Set your daily calorie target",
+    protein: "Protein est.",
+    carbs: "Carbs est.",
+    fat: "Fat est.",
+    addFood: "Add food",
+    placeholder: "Search food (apple, rice, egg…)",
+    addBtn: "+ Add",
+    todayLog: "Today's log",
+    logEmpty: "No food logged yet — add something above!",
+    tipDefault: "Start logging meals to receive personalized tips and encouragement!",
+    portionFor: "Choose portion for: ",
+    tips: [
+      {max:400,  msg:"Great start! Protein in your next meal keeps you fuller longer."},
+      {max:800,  msg:"Solid progress! Staying hydrated helps — sometimes thirst feels like hunger."},
+      {max:1200, msg:"You're on track! Aim for proteins, healthy fats, and complex carbs."},
+      {max:1600, msg:"Halfway there! Vegetables add volume to meals with minimal calories."},
+      {max:2000, msg:"Looking good! Mindful eating means slowing down and savoring each bite."},
+      {max:2400, msg:"Getting up there! Consider a lighter option for your next meal."},
+      {max:9999, msg:"High intake today — broth soups, salads, or lean proteins are great lighter choices."},
+    ],
+    cheers: [
+      "You're building great habits — one meal at a time!",
+      "Consistency is the secret. You've got this!",
+      "Great discipline! Your body thanks you.",
+      "Every healthy choice adds up. Well done!",
+    ],
+  },
+  ar: {
+    appTitle: "عداد السعرات الحرارية",
+    appSub: "تتبّع ما تأكله — حصص دقيقة، نتائج أفضل.",
+    consumed: "المستهلك",
+    goal: "الهدف",
+    remaining: "المتبقي",
+    dailyGoal: "الهدف اليومي",
+    setGoal: "حدّد هدفك اليومي من السعرات",
+    protein: "البروتين تقريباً",
+    carbs: "الكربوهيدرات تقريباً",
+    fat: "الدهون تقريباً",
+    addFood: "أضف طعاماً",
+    placeholder: "ابحث عن طعام (تفاحة، أرز، بيض…)",
+    addBtn: "+ أضف",
+    todayLog: "سجل اليوم",
+    logEmpty: "لم تُسجّل أي طعام بعد — أضف شيئاً من الأعلى!",
+    tipDefault: "ابدأ بتسجيل وجباتك للحصول على نصائح وتشجيع شخصي!",
+    portionFor: "اختر الحصة لـ: ",
+    tips: [
+      {max:400,  msg:"بداية رائعة! البروتين في وجبتك القادمة يبقيك ممتلئاً لفترة أطول."},
+      {max:800,  msg:"تقدّم جيد! شرب الماء يساعد — أحياناً العطش يبدو كالجوع."},
+      {max:1200, msg:"أنت على المسار الصحيح! اجمع البروتين والدهون الصحية والكربوهيدرات المعقدة."},
+      {max:1600, msg:"في المنتصف! الخضروات تُشبع بسعرات أقل."},
+      {max:2000, msg:"يبدو رائعاً! الأكل الواعي يعني التمهّل والاستمتاع بكل لقمة."},
+      {max:2400, msg:"ترتفع السعرات! فكّر في خيار أخف لوجبتك القادمة."},
+      {max:9999, msg:"استهلاك مرتفع اليوم — الحساء والسلطات والبروتين الخفيف خيارات ممتازة."},
+    ],
+    cheers: [
+      "أنت تبني عادات رائعة — وجبة واحدة في كل مرة!",
+      "الاتساق هو السر. أنت تستطيع!",
+      "انضباط رائع! جسمك يشكرك.",
+      "كل اختيار صحي يُحدث فرقاً. أحسنت!",
+    ],
+  }
+};
+
+let currentLang = 'en';
+
+document.getElementById('foodInput').addEventListener('input',e=>{
+  selectedFood=null;
+  document.getElementById('qtyInput')._portionLabel='';
+  hidePortionHint();
+  showSuggestions(e.target.value);
+});
+document.getElementById('foodInput').addEventListener('keydown',e=>{if(e.key==='Enter')addFood();});
+document.getElementById('addBtn').addEventListener('click',addFood);
+document.getElementById('goalInput').addEventListener('input',e=>{const v=parseInt(e.target.value);goal=isNaN(v)?2000:Math.min(6000,Math.max(500,v));updateStats();});
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.food-wrap')&&!e.target.closest('.portion-hint')&&!e.target.closest('#addBtn'))
+    document.getElementById('suggestions').style.display='none';
+});
+
+
+
+function setLang(lang) {
+  currentLang = lang;
+  const L = i18n[lang];
+  const isAr = lang === 'ar';
+  document.documentElement.lang = lang;
+  document.body.classList.toggle('rtl', isAr);
+
+  // Static text
+  document.querySelector('.header h1').textContent = L.appTitle;
+  document.querySelector('.header p').textContent = L.appSub;
+
+  // Stat labels
+  const labels = document.querySelectorAll('.stat-label');
+  labels[0].textContent = L.consumed;
+  labels[1].textContent = L.goal;
+  labels[2].textContent = L.remaining;
+
+  // Goal card
+  document.getElementById('labelGoal').textContent = L.dailyGoal;
+  document.querySelector('.goal-text').textContent = L.setGoal;
+
+  // Macros
+  const macroSpans = document.querySelectorAll('.macro-pill span');
+  macroSpans[0].textContent = L.protein;
+  macroSpans[1].textContent = L.carbs;
+  macroSpans[2].textContent = L.fat;
+
+  // Add food card
+  document.getElementById('labelAddFood').textContent = L.addFood;
+  document.getElementById('foodInput').placeholder = L.placeholder;
+  document.getElementById('addBtn').textContent = L.addBtn;
+
+  // Log card
+  document.getElementById('labelLog').textContent = L.todayLog;
+
+  // Lang buttons
+  document.querySelectorAll('.lang-btn').forEach(b => {
+    b.classList.toggle('active', (b.textContent === 'EN' && lang === 'en') || (b.textContent === 'ع' && lang === 'ar'));
+  });
+
+  // Tip & log
+  renderLog();
+  updateStats();
+}
+
+renderThemes();applyTheme(0);setLang('en');
+</script>
+</body>
+</html>
